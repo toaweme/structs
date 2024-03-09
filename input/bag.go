@@ -34,8 +34,8 @@ func (bag *Bag) Collect() map[string]any {
 	for k, v := range bag.Env {
 		_ = k
 		_ = v
-		// vars["env."+k] = v
-		// vars["env."+strings.ToLower(k)] = v
+		vars[k] = v
+		vars["env."+strings.ToLower(k)] = v
 	}
 	for k, v := range bag.Data {
 		vars["data."+k] = v
