@@ -17,7 +17,7 @@ func ValidateStructFields(structFields []Field, values map[string]any, validatio
 
 			fieldValidationRules, err := validateRule(rule, fieldName, values, structField.Default)
 			if err != nil {
-				return nil, fmt.Errorf("error validating rule %s for field %s: %w", rule.Name, fieldName, err)
+				return nil, fmt.Errorf("error running validator function for rule '%s' field '%s': %w", rule.Name, fieldName, err)
 			}
 
 			for errorFieldName, errorMessages := range fieldValidationRules {
