@@ -6,7 +6,7 @@ import (
 
 type Manager struct {
 	structure            any
-	rules                map[string]RuleFunc
+	ruleFuncs            map[string]RuleFunc
 	validationMessageTag string
 	tags                 []string
 }
@@ -17,7 +17,7 @@ func NewManager(structure any, rules map[string]RuleFunc, tags ...string) *Manag
 	return &Manager{
 		structure:            structure,
 		validationMessageTag: "json",
-		rules:                rules,
+		ruleFuncs:            rules,
 		tags:                 tags,
 	}
 }
@@ -36,9 +36,9 @@ func (m *Manager) Validate(inputs map[string]any) (map[string][]string, error) {
 		return nil, fmt.Errorf("error getting struct fields for validation: %w", err)
 	}
 
-	errors, err := ValidateStructFields(structFields, inputs, m.validationMessageTag, m.tags...)
+	errors, err := ValidateStructFields(m.ruleFuncs, structFields, inputs, m.validationMessageTag, m.tags...)
 	if err != nil {
-		return nil, fmt.Errorf("error validating translator inputs: %w", err)
+		return nil, fmt.Errorf("error validating struct with inputs: %w", err)
 	}
 
 	return errors, nil
@@ -47,7 +47,7 @@ func (m *Manager) Validate(inputs map[string]any) (map[string][]string, error) {
 func (m *Manager) SetFields(inputs map[string]any) error {
 	err := SetStructFields(m.structure, m.tags, inputs)
 	if err != nil {
-		return err
+		return fmt.Errorf("error setting struct fields: %w", err)
 	}
 
 	return nil
