@@ -1,10 +1,3 @@
-# Structs
-
-Golang package to validate, process, and manipulate structs via field tags.
-
-## Usage
-
-```go
 package main
 
 import (
@@ -60,5 +53,3 @@ func validateStruct(structure any, inputs map[string]any) error {
 
 	return nil
 }
-
-```
