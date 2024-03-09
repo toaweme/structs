@@ -171,7 +171,7 @@ func setSliceValue(fieldName string, value any, fieldValue reflect.Value) error 
 		return nil
 	}
 
-	slice, err := utils.toAnySlice(value)
+	slice, err := utils.ToAnySlice(value)
 	if err != nil {
 		return err
 	}

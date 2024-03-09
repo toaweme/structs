@@ -61,7 +61,7 @@ func ToString(value any) (string, error) {
 	}
 }
 
-func toAnySlice(value any) ([]any, error) {
+func ToAnySlice(value any) ([]any, error) {
 	switch v := value.(type) {
 	case []any:
 		return value.([]any), nil
