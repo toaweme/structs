@@ -30,7 +30,7 @@ func main() {
 }
 
 func validateStruct(structure any, inputs map[string]any) error {
-	manager := structs.NewManager(structure, structs.DefaultTags...)
+	manager := structs.NewManager(structure, structs.DefaultRules, structs.DefaultTags...)
 	errors, err := manager.Validate(inputs)
 	if err != nil {
 		return fmt.Errorf("error validating cli command structure: %w", err)

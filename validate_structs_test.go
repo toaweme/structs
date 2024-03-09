@@ -16,7 +16,7 @@ func Test_Validate_StructFields(t *testing.T) {
 		name           string
 		input          any
 		tagPriority    []string
-		values         map[string]string
+		values         map[string]any
 		expectedErrors map[string][]string
 		wantErr        error
 	}{
@@ -24,7 +24,7 @@ func Test_Validate_StructFields(t *testing.T) {
 			name:        "all json fields valid",
 			input:       &TestStructWithRules{},
 			tagPriority: []string{"json"},
-			values: map[string]string{
+			values: map[string]any{
 				"field_1": "field_1_value",
 				"field_2": "field_2_value",
 			},
@@ -34,28 +34,33 @@ func Test_Validate_StructFields(t *testing.T) {
 			name:        "one json field invalid",
 			input:       &TestStructWithRules{},
 			tagPriority: []string{"json"},
-			values: map[string]string{
+			values: map[string]any{
 				"field_2": "field_2_value",
 			},
 			expectedErrors: map[string][]string{
-				"field_1": {"value is required"},
+				"field_1": {"required"},
 			},
 		},
 		{
 			name:        "all json fields invalid",
 			input:       &TestStructWithRules{},
 			tagPriority: []string{"json"},
-			values:      map[string]string{},
+			values:      map[string]any{},
 			expectedErrors: map[string][]string{
-				"field_1": {"value is required"},
-				"field_2": {"value is required"},
+				"field_1": {"required"},
+				"field_2": {"required"},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors, err := ValidateStructFields(tt.input, tt.values, "json", tt.tagPriority...)
+			fields, err := GetStructFields(tt.input)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			errors, err := ValidateStructFields(DefaultRules, fields, tt.values, "json", tt.tagPriority...)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 				return

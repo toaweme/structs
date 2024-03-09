@@ -40,11 +40,11 @@ func ToInt(value any) (int, error) {
 	case string:
 		integer, err := strconv.Atoi(v)
 		if err != nil {
-			return 0, fmt.Errorf("failed to parse int default value: %s: %w", v, err)
+			return 0, fmt.Errorf("failed to parse int value: %s: %w", v, err)
 		}
 		return integer, nil
 	default:
-		return 0, fmt.Errorf("unsupported int type: %T", value)
+		return 0, fmt.Errorf("failed to parse int from type: %T, value: %v", value, value)
 	}
 }
 

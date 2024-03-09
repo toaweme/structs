@@ -6,16 +6,18 @@ import (
 
 type Manager struct {
 	structure            any
+	rules                map[string]RuleFunc
 	validationMessageTag string
 	tags                 []string
 }
 
 var DefaultTags = []string{"arg", "short", "env", "json", "yaml"}
 
-func NewManager(structure any, tags ...string) *Manager {
+func NewManager(structure any, rules map[string]RuleFunc, tags ...string) *Manager {
 	return &Manager{
 		structure:            structure,
 		validationMessageTag: "json",
+		rules:                rules,
 		tags:                 tags,
 	}
 }
