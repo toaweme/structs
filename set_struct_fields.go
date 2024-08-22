@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/contentforward/structs/utils"
 )
 
@@ -60,13 +58,13 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 
 			// found value name in tag
 			if value, ok := values[fieldNameInTag]; ok {
-				log.Trace().Str("tag", tag).
-					Str("tag-value", fieldNameInTag).
-					Str("struct-field", field.Name).
-					Str("struct", name).
-					Str("struct-field-type", fieldType.String()).
-					Any("value", value).
-					Msg("setting struct field value via tag")
+				//log.Trace().Str("tag", tag).
+				//	Str("tag-value", fieldNameInTag).
+				//	Str("struct-field", field.Name).
+				//	Str("struct", name).
+				//	Str("struct-field-type", fieldType.String()).
+				//	Any("value", value).
+				//	Msg("setting struct field value via tag")
 
 				err := setValue(fieldNameInTag, value, fieldType, fieldValue)
 				if err != nil {
@@ -77,13 +75,13 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 
 			// found default value name in tag
 			if defaultValue, ok := fieldTags[defaultValueTag]; ok {
-				log.Trace().Str("tag", tag).
-					Str("tag-field", fieldNameInTag).
-					Str("struct-field", field.Name).
-					Str("struct", name).
-					Str("struct-field-type", fieldType.String()).
-					Any("val", fieldValue).
-					Msg("setting struct field value via 'default:*` tag")
+				//log.Trace().Str("tag", tag).
+				//	Str("tag-field", fieldNameInTag).
+				//	Str("struct-field", field.Name).
+				//	Str("struct", name).
+				//	Str("struct-field-type", fieldType.String()).
+				//	Any("val", fieldValue).
+				//	Msg("setting struct field value via 'default:*` tag")
 				err := setValue(fieldNameInTag, defaultValue, fieldType, fieldValue)
 				if err != nil {
 					return err
@@ -95,7 +93,7 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 
 		// if the field is not set, try to set it using the field name e.g. IsBeep vs is_beep
 		if value, ok := values[field.Name]; ok {
-			log.Trace().Str("field", field.Name).Any("val", value).Msg("setting field directly")
+			//log.Trace().Str("field", field.Name).Any("val", value).Msg("setting field directly")
 			fieldValue.Set(reflect.ValueOf(value))
 		}
 	}

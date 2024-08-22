@@ -2,8 +2,6 @@ package structs
 
 import (
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Rule struct {
@@ -68,7 +66,7 @@ func MapDefaultValues(fields []Field, values map[string]any, tagPriority ...stri
 			if ok {
 				if field.Default != "" {
 					valuesCopy[fieldNameByTag] = field.Default
-					log.Trace().Str("field", field.Name).Str("tag", tag).Str("value", field.Default).Msg("setting default value")
+					//log.Trace().Str("field", field.Name).Str("tag", tag).Str("value", field.Default).Msg("setting default value")
 				}
 			}
 		}
