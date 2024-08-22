@@ -22,7 +22,7 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 	if val.Elem().Kind() != reflect.Struct {
 		return ErrInputPointerStruct
 	}
-	name := val.Elem().Type().Name()
+	//name := val.Elem().Type().Name()
 	val = val.Elem()
 	typ := val.Type()
 
