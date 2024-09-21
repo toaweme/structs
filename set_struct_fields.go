@@ -22,7 +22,7 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 	if val.Elem().Kind() != reflect.Struct {
 		return ErrInputPointerStruct
 	}
-	//name := val.Elem().Type().Name()
+
 	val = val.Elem()
 	typ := val.Type()
 
@@ -58,7 +58,7 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 
 			// found value name in tag
 			if value, ok := values[fieldNameInTag]; ok {
-				//log.Trace().Str("tag", tag).
+				// log.Trace().Str("tag", tag).
 				//	Str("tag-value", fieldNameInTag).
 				//	Str("struct-field", field.Name).
 				//	Str("struct", name).
@@ -75,7 +75,7 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 
 			// found default value name in tag
 			if defaultValue, ok := fieldTags[defaultValueTag]; ok {
-				//log.Trace().Str("tag", tag).
+				// log.Trace().Str("tag", tag).
 				//	Str("tag-field", fieldNameInTag).
 				//	Str("struct-field", field.Name).
 				//	Str("struct", name).
@@ -93,7 +93,7 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 
 		// if the field is not set, try to set it using the field name e.g. IsBeep vs is_beep
 		if value, ok := values[field.Name]; ok {
-			//log.Trace().Str("field", field.Name).Any("val", value).Msg("setting field directly")
+			// log.Trace().Str("field", field.Name).Any("val", value).Msg("setting field directly")
 			fieldValue.Set(reflect.ValueOf(value))
 		}
 	}
@@ -179,20 +179,6 @@ func setSliceValue(fieldName string, value any, fieldValue reflect.Value) error 
 }
 
 func getFieldTags(field reflect.StructField) map[string]string {
-	tags := make(map[string]string)
-	splitTags := strings.Split(string(field.Tag), " ")
-
-	for _, tag := range splitTags {
-		// spew.Dump(tag)
-		if strings.Contains(tag, ":") {
-			pair := strings.Split(tag, ":")
-			tagName := pair[0]
-			tagValue := strings.Trim(strings.Join(pair[1:], ":"), "\"")
-
-			// log.Trace().Str("tag", tagName).Str("val", tagValue).Msg("found tag")
-
-			tags[tagName] = tagValue
-		}
-	}
-	return tags
+	splitTags := parseTags(string(field.Tag))
+	return splitTags
 }

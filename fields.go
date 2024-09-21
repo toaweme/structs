@@ -28,13 +28,14 @@ const validationTag = "rules"
 
 type Field struct {
 	Name    string
+	Type    string
 	Tags    map[string]string
 	Default string
 	Rules   []Rule
 }
 
-func NewField(name string, tags map[string]string) Field {
-	f := Field{Name: name}
+func NewField(name, dataType string, tags map[string]string) Field {
+	f := Field{Name: name, Type: dataType}
 	if defaultVal, ok := tags[defaultValueTag]; ok {
 		f.Default = defaultVal
 		delete(tags, defaultValueTag)
@@ -66,7 +67,7 @@ func MapDefaultValues(fields []Field, values map[string]any, tagPriority ...stri
 			if ok {
 				if field.Default != "" {
 					valuesCopy[fieldNameByTag] = field.Default
-					//log.Trace().Str("field", field.Name).Str("tag", tag).Str("value", field.Default).Msg("setting default value")
+					// log.Trace().Str("field", field.Name).Str("tag", tag).Str("value", field.Default).Msg("setting default value")
 				}
 			}
 		}
