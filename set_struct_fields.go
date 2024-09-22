@@ -48,45 +48,34 @@ func SetStructFields(structure any, tagOrder []string, values map[string]any) er
 			continue
 		}
 
-		// other types
+		// other types than structs
 		fieldTags := getFieldTags(field)
+
+		// first set the default if possible
+		if defaultValue, ok := fieldTags[defaultValueTag]; ok {
+			// slog.Info("setting default value", "tag", defaultValueTag, "value", defaultValue)
+			// fieldName can be anything
+			err := setValue("", defaultValue, fieldType, fieldValue)
+			if err != nil {
+				return fmt.Errorf("failed to set default value for field[%s]: %w", field.Name, err)
+			}
+		}
+
+		// then iterate over tags
 		for _, tag := range tagOrder {
 			fieldNameInTag, ok := fieldTags[tag]
 			if !ok {
 				continue
 			}
 
-			// found value name in tag
+			// found field name in tag e.g. `arg:"cwd"`
+			// it's noteworthy that we allow emptying the field when a key is present
+			// this ensures we can keep the ability to toggle the default value
 			if value, ok := values[fieldNameInTag]; ok {
-				// log.Trace().Str("tag", tag).
-				//	Str("tag-value", fieldNameInTag).
-				//	Str("struct-field", field.Name).
-				//	Str("struct", name).
-				//	Str("struct-field-type", fieldType.String()).
-				//	Any("value", value).
-				//	Msg("setting struct field value via tag")
-
 				err := setValue(fieldNameInTag, value, fieldType, fieldValue)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to set field[%s] value: %w", field.Name, err)
 				}
-				break
-			}
-
-			// found default value name in tag
-			if defaultValue, ok := fieldTags[defaultValueTag]; ok {
-				// log.Trace().Str("tag", tag).
-				//	Str("tag-field", fieldNameInTag).
-				//	Str("struct-field", field.Name).
-				//	Str("struct", name).
-				//	Str("struct-field-type", fieldType.String()).
-				//	Any("val", fieldValue).
-				//	Msg("setting struct field value via 'default:*` tag")
-				err := setValue(fieldNameInTag, defaultValue, fieldType, fieldValue)
-				if err != nil {
-					return err
-				}
-
 				break
 			}
 		}
