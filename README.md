@@ -37,7 +37,7 @@ func main() {
 }
 
 func validateStruct(structure any, inputs map[string]any) error {
-	manager := structs.NewManager(structure, structs.DefaultRules, structs.DefaultTags...)
+	manager := structs.New(structure, structs.DefaultRules, structs.DefaultTags...)
 	errors, err := manager.Validate(inputs)
 	if err != nil {
 		return fmt.Errorf("error validating cli command structure: %w", err)
@@ -53,7 +53,7 @@ func validateStruct(structure any, inputs map[string]any) error {
 		return fmt.Errorf("validation failed: %v", errors)
 	}
 
-	err = manager.SetFields(inputs)
+	err = manager.Set(inputs)
 	if err != nil {
 		return fmt.Errorf("failed to set fields: %w", err)
 	}

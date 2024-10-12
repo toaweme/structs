@@ -4,33 +4,35 @@ import (
 	"fmt"
 )
 
-type Manager struct {
+// Struct holds the structure to be validated and the rules to validate it with
+type Struct struct {
 	structure            any
 	ruleFuncs            map[string]RuleFunc
 	validationMessageTag string
 	tags                 []string
 }
 
-var DefaultTags = []string{"arg", "short", "env", "json", "yaml"}
+var DefaultTags = []string{"arg", "short", "json", "yaml"}
 
-func NewManager(structure any, rules map[string]RuleFunc, tags ...string) *Manager {
-	return &Manager{
+func New(structure any, rules map[string]RuleFunc, tags ...string) *Struct {
+	return &Struct{
 		structure:            structure,
-		validationMessageTag: "json",
+		validationMessageTag: validationTag,
 		ruleFuncs:            rules,
 		tags:                 tags,
 	}
 }
 
-func NewManagerWithValidationTag(structure any, validationTag string, tags ...string) *Manager {
-	return &Manager{
+func NewWithValidation(structure any, rules map[string]RuleFunc, validationTag string, tags ...string) *Struct {
+	return &Struct{
 		structure:            structure,
 		validationMessageTag: validationTag,
+		ruleFuncs:            rules,
 		tags:                 tags,
 	}
 }
 
-func (m *Manager) Validate(inputs map[string]any) (map[string][]string, error) {
+func (m *Struct) Validate(inputs map[string]any) (map[string][]string, error) {
 	structFields, err := GetStructFields(m.structure)
 	if err != nil {
 		return nil, fmt.Errorf("error getting struct fields for validation: %w", err)
@@ -44,8 +46,12 @@ func (m *Manager) Validate(inputs map[string]any) (map[string][]string, error) {
 	return errors, nil
 }
 
-func (m *Manager) SetFields(inputs map[string]any) error {
-	err := SetStructFields(m.structure, m.tags, inputs)
+func (m *Struct) Set(inputs map[string]any) error {
+	err := SetStructFields(m.structure, Settings{
+		TagOrder:         m.tags,
+		AllowEnvOverride: false,
+		AllowTagOverride: false,
+	}, inputs)
 	if err != nil {
 		return fmt.Errorf("error setting struct fields: %w", err)
 	}

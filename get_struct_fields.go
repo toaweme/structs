@@ -32,7 +32,7 @@ func GetStructFields(structure any) ([]Field, error) {
 				fields = append(fields, f)
 			}
 		} else {
-			tags := getFieldTags(field)
+			tags := parseTags(string(field.Tag))
 			f := NewField(field.Name, field.Type.String(), tags)
 			fields = append(fields, f)
 		}
@@ -41,7 +41,7 @@ func GetStructFields(structure any) ([]Field, error) {
 	return fields, nil
 }
 
-// parseTags extracts tags and their values from a given line of text
+// parseTags extracts inputs and their inputs from a given line of text
 // arg:"cwd" short:"c" help:"Current working directory"
 // The function returns a map: {"arg": "cwd", "short": "c", "help": "Current working directory"}
 func parseTags(line string) map[string]string {

@@ -24,6 +24,7 @@ func parseRules(rules []string) []Rule {
 }
 
 const defaultValueTag = "default"
+const envValueTag = "env"
 const validationTag = "rules"
 
 type Field struct {
