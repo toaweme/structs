@@ -8,7 +8,7 @@ import (
 func GetStructFields(structure any) ([]Field, error) {
 	val := reflect.ValueOf(structure)
 	if val.Kind() != reflect.Ptr {
-		return nil, ErrInputPointerStruct
+		return nil, ErrInputPointer
 	}
 	if val.Elem().Kind() != reflect.Struct {
 		return nil, ErrInputPointerStruct
@@ -21,19 +21,23 @@ func GetStructFields(structure any) ([]Field, error) {
 
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
+		fieldValue := val.Field(i)
+
+		tags := parseTags(string(field.Tag))
+		f := NewField(field.Name, field.Type.Kind(), fieldValue, tags, nil)
 
 		if field.Type.Kind() == reflect.Struct {
 			nestedFields, err := GetStructFields(val.Field(i).Addr().Interface())
 			if err != nil {
 				return nil, err
 			}
-			for _, nestedField := range nestedFields {
-				f := NewField(field.Name+"."+nestedField.Name, field.Type.String(), nestedField.Tags)
-				fields = append(fields, f)
+			for j := range nestedFields {
+				nestedFields[j].Parent = &f
+				nestedFields[j].FQN = nestedFields[j].buildFQN()
 			}
+			f.Fields = nestedFields
+			fields = append(fields, f)
 		} else {
-			tags := parseTags(string(field.Tag))
-			f := NewField(field.Name, field.Type.String(), tags)
 			fields = append(fields, f)
 		}
 	}

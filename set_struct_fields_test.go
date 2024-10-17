@@ -104,11 +104,11 @@ func Test_SetStructFields(t *testing.T) {
 				Field3 struct {
 					Field1 string `name:"field_1"`
 					Field2 int    `name:"field_2"`
-				} `name:"field_3" tag1:"field_3"`
+				} `name:"field_3"`
 				Field4 struct {
 					Field1 string `name:"field_1"`
 					Field2 int    `name:"field_2"`
-				} `name:"field_4" tag1:"field_4"`
+				} `name:"field_4"`
 			}{},
 			settings: Settings{
 				TagOrder:         []string{"name"},
@@ -230,11 +230,28 @@ func Test_SetStructFields(t *testing.T) {
 				Outer: -1,
 			},
 		},
+		{
+			name: "ensure inner struct is not nil",
+			structure: &struct {
+				Inner struct {
+					A string
+				}
+			}{},
+			inputs: map[string]any{},
+			expected: &struct {
+				Inner struct {
+					A string
+				}
+			}{
+				Inner: struct {
+					A string
+				}{},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// slog.Info("running test", "name", tt.name)
 			err := SetStructFields(tt.structure, tt.settings, tt.inputs)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, tt.wantErr, err)

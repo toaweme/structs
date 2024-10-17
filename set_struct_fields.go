@@ -28,35 +28,24 @@ type Settings struct {
 	AllowTagOverride bool
 }
 
-func SetStructFieldsWithEnv(structure any, settings Settings, values map[string]any, env map[string]any) error {
-	all := addInputs(values, env)
-
-	return SetStructFields(structure, settings, all)
-}
-
 // SetStructFields sets the fields of a struct based on the inputs provided
 func SetStructFields(structure any, settings Settings, inputs map[string]any) error {
-	// slog.Info("setting struct fields", "structure", structure, "settings", settings, "inputs", inputs)
-	// val is a pointer to the struct, not the struct itself
-	val := reflect.ValueOf(structure)
-	if val.Kind() != reflect.Ptr {
-		return ErrInputPointer
-	}
-	if val.Elem().Kind() != reflect.Struct {
-		return ErrInputPointerStruct
+	fields, err := GetStructFields(structure)
+	if err != nil {
+		return err
 	}
 
-	// val.Elem() is the struct
-	val = val.Elem()
-	typ := val.Type()
+	err = SetFields(fields, settings, inputs)
+	if err != nil {
+		return err
+	}
 
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		fieldValue := val.Field(i)
-		fieldType := field.Type.Kind()
-		fieldTags := parseTags(string(field.Tag))
+	return nil
+}
 
-		err := setField(field, fieldValue, fieldType, fieldTags, settings, inputs)
+func SetFields(fields []Field, settings Settings, inputs map[string]any) error {
+	for _, field := range fields {
+		err := SetField(field, settings, inputs)
 		if err != nil {
 			return err
 		}
@@ -65,119 +54,122 @@ func SetStructFields(structure any, settings Settings, inputs map[string]any) er
 	return nil
 }
 
-func setField(field reflect.StructField, fieldValue reflect.Value, fieldType reflect.Kind, fieldTags map[string]string, settings Settings, inputs map[string]any) error {
-	// slog.Info("-------------")
-	// slog.Info("inputs", "inputs", inputs)
-	// slog.Info("field", "name", field.Name, "type", fieldType.String(), "tags", fieldTags)
-	// structs are a special case, and we don't support `default:"*"` for them
-	// maybe it's a good TODO to support JSON strings in tag/default inputs
-	if fieldType == reflect.Struct {
-		// handle env var based ["PARENT_CHILD_FIELD"] = value`
-		if envVarName, ok := fieldTags[envValueTag]; ok {
-			// env file:
-			// PARENT_CHILD_FIELD=value
-			// struct field:
-			// Parent struct {
-			//   ChildField canBeStruct `env:"CHILD_FIELD"`
-			// }
-			// convert PARENT_CHILD_FIELD => CHILD_FIELD
-			childInputs := getChildInputs(inputs, envVarName, "_")
-			withChildInputs := addInputs(inputs, childInputs)
-			err := SetStructFields(fieldValue.Addr().Interface(), settings, withChildInputs)
-			if err != nil {
-				return fmt.Errorf("failed to set field-struct.env[%s] value: %w", envVarName, err)
-			}
-			if !settings.AllowEnvOverride {
-				return nil
+func SetField(field Field, settings Settings, inputs map[string]any) error {
+	// slog.Info("field", "field", field)
+
+	fqn := field.FQN
+	// may be a top level field
+	if fqn == nil {
+		// check env var matches
+		if _, ok := field.Tags[envValueTag]; ok {
+			envKey := field.Tags[envValueTag]
+			if _, ok := inputs[envKey]; ok {
+				err := setField(field, inputs[envKey])
+				if err != nil {
+					return err
+				}
+
+				if !settings.AllowEnvOverride {
+					return nil
+				}
 			}
 		}
 
-		// handle tag based ["parent.child.*.child.field"] = value`
+		// check exact field name match
+		if val, ok := inputs[field.Name]; ok {
+			err := setField(field, val)
+			if err != nil {
+				return err
+			}
+		}
+
+		// check tag matches
 		for _, tag := range settings.TagOrder {
-			fieldNameInTag, ok := fieldTags[tag]
-			if !ok {
-				continue
-			}
+			if val, ok := inputs[field.Tags[tag]]; ok {
+				err := setField(field, val)
+				if err != nil {
+					return err
+				}
 
-			childInputs := getChildInputs(inputs, fieldNameInTag, ".")
-			withChildInputs := addInputs(inputs, childInputs)
-			err := SetStructFields(fieldValue.Addr().Interface(), settings, withChildInputs)
-			if err != nil {
-				return fmt.Errorf("failed to set field-struct.tag[%s] value: %w", fieldNameInTag, err)
-			}
-
-			// skips the rest of the tags
-			if !settings.AllowTagOverride {
-				return nil
+				if !settings.AllowTagOverride {
+					return nil
+				}
 			}
 		}
 
-		// handle field name based ["ParentField.ChildField.*.ChildField.Field"] = value`
-		childInputs := getChildInputs(inputs, field.Name, ".")
-		withChildInputs := addInputs(inputs, childInputs)
-		err := SetStructFields(fieldValue.Addr().Interface(), settings, withChildInputs)
-		if err != nil {
-			return fmt.Errorf("failed to set field-struct.name[%s] value: %w", field.Name, err)
+		// check nested field matches
+		if field.Fields != nil {
+			err := SetFields(field.Fields, settings, inputs)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
 	}
 
-	// first set the default if possible
-	if defaultValue, ok := fieldTags[defaultValueTag]; ok {
-		// slog.Info("setting default value", "field", field.Name, "value", defaultValue)
-		err := setValue(field.Name, defaultValue, fieldType, fieldValue)
-		if err != nil {
-			return fmt.Errorf("failed to set default value for field[%s]: %w", field.Name, err)
-		}
-
-		// do nothing here to allow the default value to be overridden
-	}
-
-	// then set the env var if possible
-	if envVarName, ok := fieldTags[envValueTag]; ok {
-		if value, ok := inputs[envVarName]; ok {
-			// slog.Info("setting env value", "field", field.Name, "env", envVarName, "value", value)
-			err := setValue(envVarName, value, fieldType, fieldValue)
+	// check fqn env var matches
+	if _, ok := fqn.Tags[envValueTag]; ok {
+		envKey := fqn.Tags[envValueTag]
+		if _, ok := inputs[envKey]; ok {
+			err := setField(field, inputs[envKey])
 			if err != nil {
-				return fmt.Errorf("failed to set field[%s].env[%s] value: %w", field.Name, envVarName, err)
+				return err
 			}
+
 			if !settings.AllowEnvOverride {
 				return nil
 			}
 		}
 	}
 
-	// then iterate over tags
-	for _, tag := range settings.TagOrder {
-		fieldNameInTag, ok := fieldTags[tag]
-		if !ok {
-			continue
+	// check fqn exact field name match
+	if val, ok := inputs[fqn.Name]; ok {
+		err := setField(field, val)
+		if err != nil {
+			return err
 		}
+	}
 
-		// found field name in tag e.g. `arg:"cwd"`
-		// it's noteworthy that we allow emptying the field when a key is present
-		// this ensures we can keep the ability to toggle the default value
-		if value, ok := inputs[fieldNameInTag]; ok {
-			// slog.Info("setting tag value", "field", field.Name, "tag", tag, "value", value)
-			err := setValue(fieldNameInTag, value, fieldType, fieldValue)
+	// check fqn tag matches
+	for _, tag := range settings.TagOrder {
+		if val, ok := inputs[fqn.Tags[tag]]; ok {
+			err := setField(field, val)
 			if err != nil {
-				return fmt.Errorf("failed to set field[%s] value: %w", field.Name, err)
+				return err
 			}
-			// skips the rest of the tags
+
 			if !settings.AllowTagOverride {
 				return nil
 			}
 		}
 	}
 
-	// if the field is not set, try to set it using the field name e.g. IsBeep vs is_beep
-	if value, ok := inputs[field.Name]; ok {
-		// slog.Info("setting field value", "field", field.Name, "value", value)
-		err := setValue(field.Name, value, fieldType, fieldValue)
+	// check fqn nested field matches
+	if field.Fields != nil {
+		err := SetFields(field.Fields, settings, inputs)
 		if err != nil {
-			return fmt.Errorf("failed to set field[%s] value: %w", field.Name, err)
+			return err
 		}
+	}
+
+	return nil
+}
+
+func setField(field Field, input any) error {
+	// slog.Info("-------------")
+	// slog.Info("input", "input", input)
+	// slog.Info("setField", "name", field.Name, "type", field.Kind.String(), "tags", field.Tags)
+	// structs are a special case, and we don't support `default:"*"` for them
+	// maybe it's a good TODO to support JSON strings in tag/default input
+	// if field.Type == reflect.Struct.String() {
+	// slog.Info("skipping struct field", "field", field.Name, "type", field.Type)
+	// return nil
+	// }
+
+	err := setValue(field.Name, input, field.Kind, field.Value)
+	if err != nil {
+		return err
 	}
 
 	return nil
