@@ -33,7 +33,7 @@ func NewWithValidation(structure any, rules map[string]RuleFunc, validationTag s
 }
 
 func (m *Struct) Validate(inputs map[string]any) (map[string][]string, error) {
-	structFields, err := GetStructFields(m.structure)
+	structFields, err := GetStructFields(m.structure, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error getting struct fields for validation: %w", err)
 	}

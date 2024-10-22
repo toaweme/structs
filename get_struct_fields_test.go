@@ -128,7 +128,7 @@ func Test_GetStructFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := GetStructFields(tt.input)
+			result, err := GetStructFields(tt.input, nil)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, tt.wantErr, err)
 				return

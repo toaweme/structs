@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/contentforward/structs/utils"
 )
@@ -28,12 +27,22 @@ type Settings struct {
 	AllowTagOverride bool
 }
 
+func printFields(fields []Field) {
+	for _, field := range fields {
+		fmt.Println(field.Name, field.Kind, "fields", len(field.Fields))
+		printFields(field.Fields)
+	}
+}
+
 // SetStructFields sets the fields of a struct based on the inputs provided
 func SetStructFields(structure any, settings Settings, inputs map[string]any) error {
-	fields, err := GetStructFields(structure)
+	fields, err := GetStructFields(structure, nil)
 	if err != nil {
 		return err
 	}
+
+	// print recursive fields with nested field count
+	// printFields(fields)
 
 	err = SetFields(fields, settings, inputs)
 	if err != nil {
@@ -45,6 +54,14 @@ func SetStructFields(structure any, settings Settings, inputs map[string]any) er
 
 func SetFields(fields []Field, settings Settings, inputs map[string]any) error {
 	for _, field := range fields {
+		if field.Kind == reflect.Struct {
+			err := SetFields(field.Fields, settings, inputs)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
 		err := SetField(field, settings, inputs)
 		if err != nil {
 			return err
@@ -157,43 +174,12 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 }
 
 func setField(field Field, input any) error {
-	// slog.Info("-------------")
-	// slog.Info("input", "input", input)
-	// slog.Info("setField", "name", field.Name, "type", field.Kind.String(), "tags", field.Tags)
-	// structs are a special case, and we don't support `default:"*"` for them
-	// maybe it's a good TODO to support JSON strings in tag/default input
-	// if field.Type == reflect.Struct.String() {
-	// slog.Info("skipping struct field", "field", field.Name, "type", field.Type)
-	// return nil
-	// }
-
 	err := setValue(field.Name, input, field.Kind, field.Value)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func addInputs(values map[string]any, nestedValues map[string]any) map[string]any {
-	for key, value := range nestedValues {
-		values[key] = value
-	}
-
-	return values
-}
-
-func getChildInputs(values map[string]any, fieldName, sep string) map[string]any {
-	nestedValues := make(map[string]any)
-
-	for key, value := range values {
-		if strings.HasPrefix(key, fieldName+sep) {
-			nestedKey := strings.TrimPrefix(key, fieldName+sep)
-			nestedValues[nestedKey] = value
-		}
-	}
-
-	return nestedValues
 }
 
 func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue reflect.Value) error {

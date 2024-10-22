@@ -75,15 +75,18 @@ func (f Field) buildFQN() *Field {
 	// `env` tag should be glued with "_"
 	for parent != nil {
 		newField.Name = parent.Name + "." + newField.Name
+		// slog.Info("newField", "name", newField.Name)
 		for tag, value := range parent.Tags {
 			if _, ok := newField.Tags[tag]; !ok {
 				continue
 			}
 			if tag == envValueTag {
 				newField.Tags[tag] = value + "_" + newField.Tags[tag]
+				// slog.Info("env", "name", newField.Tags[tag])
 			} else {
 				newField.Tags[tag] = value + "." + newField.Tags[tag]
 			}
+
 		}
 		parent = parent.Parent
 	}

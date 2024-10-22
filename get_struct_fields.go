@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func GetStructFields(structure any) ([]Field, error) {
+func GetStructFields(structure any, parent *Field) ([]Field, error) {
 	val := reflect.ValueOf(structure)
 	if val.Kind() != reflect.Ptr {
 		return nil, ErrInputPointer
@@ -24,10 +24,10 @@ func GetStructFields(structure any) ([]Field, error) {
 		fieldValue := val.Field(i)
 
 		tags := parseTags(string(field.Tag))
-		f := NewField(field.Name, field.Type.Kind(), fieldValue, tags, nil)
+		f := NewField(field.Name, field.Type.Kind(), fieldValue, tags, parent)
 
 		if field.Type.Kind() == reflect.Struct {
-			nestedFields, err := GetStructFields(val.Field(i).Addr().Interface())
+			nestedFields, err := GetStructFields(val.Field(i).Addr().Interface(), &f)
 			if err != nil {
 				return nil, err
 			}
@@ -41,7 +41,6 @@ func GetStructFields(structure any) ([]Field, error) {
 			fields = append(fields, f)
 		}
 	}
-
 	return fields, nil
 }
 
