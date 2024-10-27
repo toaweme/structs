@@ -1,4 +1,4 @@
-module github.com/contentforward/structs
+module github.com/awee-ai/structs
 
 go 1.20
 

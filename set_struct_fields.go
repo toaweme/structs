@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/contentforward/structs/utils"
+	"github.com/awee-ai/structs/utils"
 )
 
 var ErrInputPointer = errors.New("structure should be a pointer")
