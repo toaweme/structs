@@ -248,6 +248,44 @@ func Test_SetStructFields(t *testing.T) {
 				}{},
 			},
 		},
+		{
+			name: "default values are set",
+			structure: &struct {
+				Field1 string `name:"field_1" default:"default1"`
+				Field2 int    `name:"field_2" default:"100"`
+			}{
+				Field1: "",
+				Field2: 0,
+			},
+			expected: &struct {
+				Field1 string `name:"field_1" default:"default1"`
+				Field2 int    `name:"field_2" default:"100"`
+			}{
+				Field1: "default1",
+				Field2: 100,
+			},
+		},
+		{
+			name: "default values don't override existing values",
+			structure: &struct {
+				Field1 string `name:"field_1" default:"default1"`
+				Field2 int    `name:"field_2" default:"100"`
+				Field3 bool   `name:"field_3" default:"yes"`
+			}{
+				Field1: "pem",
+				Field2: 0,
+				Field3: false,
+			},
+			expected: &struct {
+				Field1 string `name:"field_1" default:"default1"`
+				Field2 int    `name:"field_2" default:"100"`
+				Field3 bool   `name:"field_3" default:"yes"`
+			}{
+				Field1: "pem",
+				Field2: 100,
+				Field3: true,
+			},
+		},
 	}
 
 	for _, tt := range tests {

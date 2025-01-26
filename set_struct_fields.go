@@ -3,6 +3,7 @@ package structs
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 
 	"github.com/awee-ai/structs/utils"
@@ -72,7 +73,17 @@ func SetFields(fields []Field, settings Settings, inputs map[string]any) error {
 }
 
 func SetField(field Field, settings Settings, inputs map[string]any) error {
-	// slog.Info("field", "field", field)
+	// set default value if it exists
+	if field.Default != "" {
+		// check if field has already a value set
+		if !field.Value.IsValid() || field.Value.IsZero() {
+			slog.Info("setting default value", "field", field.Name, "value", field.Default)
+			err := setField(field, field.Default)
+			if err != nil {
+				return fmt.Errorf("failed to set default value for field[%s]: %w", field.Name, err)
+			}
+		}
+	}
 
 	fqn := field.FQN
 	// may be a top level field

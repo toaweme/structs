@@ -29,9 +29,11 @@ const envValueTag = "env"
 const validationTag = "rules"
 
 type Field struct {
-	Name    string
-	Type    string
-	Tags    map[string]string
+	Name string
+	Type string
+	Tags map[string]string
+	// Default is string because it's extracted from the struct tag
+	// we'll convert it to the appropriate type when setting the field
 	Default string
 	Kind    reflect.Kind
 	Value   reflect.Value
