@@ -1,4 +1,4 @@
-module github.com/awee-ai/structs
+module github.com/toaweme/structs
 
 go 1.18
 

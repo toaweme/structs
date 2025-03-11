@@ -10,7 +10,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/awee-ai/structs"
+	"github.com/toaweme/structs"
 )
 
 type Example struct {

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/awee-ai/structs"
+	
+	"github.com/toaweme/structs"
 )
 
 type Example struct {
@@ -16,7 +16,7 @@ func main() {
 		Name: "John Doe",
 		Age:  30,
 	}
-
+	
 	err := validateStruct(example, map[string]any{
 		"name": "Jane Doe",
 		"age":  25, // or "25", works either way
@@ -24,7 +24,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("error validating struct: %w", err))
 	}
-
+	
 	fmt.Printf("Name: %s\n", example.Name)
 	fmt.Printf("Age: %d\n", example.Age)
 }
@@ -35,21 +35,21 @@ func validateStruct(structure any, inputs map[string]any) error {
 	if err != nil {
 		return fmt.Errorf("error validating cli command structure: %w", err)
 	}
-
+	
 	if len(errors) > 0 {
 		for field, rules := range errors {
 			for _, rule := range rules {
 				fmt.Printf("validation error: %s(%s)", field, rule)
 			}
 		}
-
+		
 		return fmt.Errorf("validation failed: %v", errors)
 	}
-
+	
 	err = manager.Set(inputs)
 	if err != nil {
 		return fmt.Errorf("failed to set fields: %w", err)
 	}
-
+	
 	return nil
 }

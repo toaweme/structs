@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-
-	"github.com/awee-ai/structs/utils"
+	
+	"github.com/toaweme/structs/utils"
 )
 
 var ErrInputPointer = errors.New("structure should be a pointer")
@@ -20,7 +20,7 @@ type Settings struct {
 	// env var handling takes priority over tag handling and is enabled by having a tag `env:"ENV_VAR"`
 	// this toggles whether `env:"ENV_VAR"` can be overridden by `anything:"env_var"`
 	AllowEnvOverride bool
-
+	
 	// AllowTagOverride toggles whether tag inputs can be overridden by other tags or exact FieldName matches
 	// if true, only the first tag that matches will be used and if nothing is matched
 	// we'll look for the field name as the structure key
@@ -40,15 +40,15 @@ func SetStructFields(structure any, settings Settings, inputs map[string]any) er
 	if err != nil {
 		return err
 	}
-
+	
 	// print recursive fields with nested field count
 	// printFields(fields)
-
+	
 	err = SetFields(fields, settings, inputs)
 	if err != nil {
 		return err
 	}
-
+	
 	return nil
 }
 
@@ -61,13 +61,13 @@ func SetFields(fields []Field, settings Settings, inputs map[string]any) error {
 			}
 			continue
 		}
-
+		
 		err := SetField(field, settings, inputs)
 		if err != nil {
 			return err
 		}
 	}
-
+	
 	return nil
 }
 
@@ -83,7 +83,7 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 			}
 		}
 	}
-
+	
 	fqn := field.FQN
 	// may be a top level field
 	if fqn == nil {
@@ -95,13 +95,13 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 				if err != nil {
 					return err
 				}
-
+				
 				if !settings.AllowEnvOverride {
 					return nil
 				}
 			}
 		}
-
+		
 		// check exact field name match
 		if val, ok := inputs[field.Name]; ok {
 			err := setField(field, val)
@@ -109,7 +109,7 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 				return err
 			}
 		}
-
+		
 		// check tag matches
 		for _, tag := range settings.TagOrder {
 			if val, ok := inputs[field.Tags[tag]]; ok {
@@ -117,13 +117,13 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 				if err != nil {
 					return err
 				}
-
+				
 				if !settings.AllowTagOverride {
 					return nil
 				}
 			}
 		}
-
+		
 		// check nested field matches
 		if field.Fields != nil {
 			err := SetFields(field.Fields, settings, inputs)
@@ -131,10 +131,10 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 				return err
 			}
 		}
-
+		
 		return nil
 	}
-
+	
 	// check fqn env var matches
 	if _, ok := fqn.Tags[envValueTag]; ok {
 		envKey := fqn.Tags[envValueTag]
@@ -143,13 +143,13 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 			if err != nil {
 				return err
 			}
-
+			
 			if !settings.AllowEnvOverride {
 				return nil
 			}
 		}
 	}
-
+	
 	// check fqn exact field name match
 	if val, ok := inputs[fqn.Name]; ok {
 		err := setField(field, val)
@@ -157,7 +157,7 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 			return err
 		}
 	}
-
+	
 	// check fqn tag matches
 	for _, tag := range settings.TagOrder {
 		if val, ok := inputs[fqn.Tags[tag]]; ok {
@@ -165,13 +165,13 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 			if err != nil {
 				return err
 			}
-
+			
 			if !settings.AllowTagOverride {
 				return nil
 			}
 		}
 	}
-
+	
 	// check fqn nested field matches
 	if field.Fields != nil {
 		err := SetFields(field.Fields, settings, inputs)
@@ -179,7 +179,7 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 			return err
 		}
 	}
-
+	
 	return nil
 }
 
@@ -188,7 +188,7 @@ func setField(field Field, input any) error {
 	if err != nil {
 		return err
 	}
-
+	
 	return nil
 }
 
@@ -231,7 +231,7 @@ func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue re
 	default:
 		return fmt.Errorf("unsupported field[%s] type: %s", fieldName, fieldType)
 	}
-
+	
 	return nil
 }
 
@@ -253,15 +253,15 @@ func setSliceValue(value any, fieldValue reflect.Value) error {
 			fieldValue.Set(reflect.ValueOf(slice))
 			return nil
 		}
-
+		
 		return nil
 	}
-
+	
 	slice, err := utils.ToAnySlice(value)
 	if err != nil {
 		return err
 	}
 	fieldValue.Set(reflect.ValueOf(slice))
-
+	
 	return nil
 }
