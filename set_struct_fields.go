@@ -236,32 +236,31 @@ func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue re
 }
 
 func setSliceValue(value any, fieldValue reflect.Value) error {
-	// log.Trace().Str("field", fieldName).Any("val", value).Msg("setting slice")
-	if fieldValue.Type().Elem().Kind() == reflect.String {
-		// Handle the case where the field is a slice of strings
-		if slice, ok := value.([]any); ok {
-			stringSlice := make([]string, len(slice))
-			for i, val := range slice {
-				if str, ok := val.(string); ok {
-					stringSlice[i] = str
-				} else {
-					return fmt.Errorf("cannot convert %T to string", val)
-				}
-			}
-			fieldValue.Set(reflect.ValueOf(stringSlice))
-		} else if slice, ok := value.([]string); ok {
-			fieldValue.Set(reflect.ValueOf(slice))
-			return nil
-		}
-		
-		return nil
-	}
+	fieldType := fieldValue.Type()
+	elemType := fieldType.Elem()
 	
 	slice, err := utils.ToAnySlice(value)
 	if err != nil {
 		return err
 	}
-	fieldValue.Set(reflect.ValueOf(slice))
+	
+	newSlice := reflect.MakeSlice(fieldType, len(slice), len(slice))
+	
+	for i, val := range slice {
+		elemVal := reflect.ValueOf(val)
+		
+		if !elemVal.Type().AssignableTo(elemType) {
+			if elemVal.Type().ConvertibleTo(elemType) {
+				elemVal = elemVal.Convert(elemType)
+			} else {
+				return fmt.Errorf("cannot assign or convert %T to %s", val, elemType)
+			}
+		}
+		
+		newSlice.Index(i).Set(elemVal)
+	}
+	
+	fieldValue.Set(newSlice)
 	
 	return nil
 }
