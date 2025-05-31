@@ -231,6 +231,18 @@ func Test_SetStructFields(t *testing.T) {
 			},
 		},
 		{
+			name: "slices of strings",
+			structure: &struct {
+				Strings []string `name:"strings"`
+			}{},
+			inputs: map[string]any{},
+			expected: &struct {
+				Strings []string `name:"strings"`
+			}{
+				Strings: nil,
+			},
+		},
+		{
 			name: "ensure inner struct is not nil",
 			structure: &struct {
 				Inner struct {

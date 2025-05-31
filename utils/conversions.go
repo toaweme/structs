@@ -65,6 +65,11 @@ func ToAnySlice(value any) ([]any, error) {
 	switch v := value.(type) {
 	case []any:
 		return value.([]any), nil
+	case string:
+		if v == "" {
+			return []any{}, nil
+		}
+		return []any{v}, nil
 	case []string:
 		anySlice := make([]any, len(v))
 		for i, val := range v {
