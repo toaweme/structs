@@ -298,6 +298,51 @@ func Test_SetStructFields(t *testing.T) {
 				Field3: true,
 			},
 		},
+		{
+			name: "values can be set via nested map[string]any",
+			settings: Settings{
+				TagOrder: []string{"name", "json"},
+			},
+			structure: &struct {
+				Outer struct {
+					Inner struct {
+						Value string `name:"value" default:"default1"`
+					} `name:"inner"`
+				} `name:"outer"`
+			}{
+				Outer: struct {
+					Inner struct {
+						Value string `name:"value" default:"default1"`
+					} `name:"inner"`
+				}{},
+			},
+			expected: &struct {
+				Outer struct {
+					Inner struct {
+						Value string `name:"value" default:"default1"`
+					} `name:"inner"`
+				} `name:"outer"`
+			}{
+				Outer: struct {
+					Inner struct {
+						Value string `name:"value" default:"default1"`
+					} `name:"inner"`
+				}{
+					Inner: struct {
+						Value string `name:"value" default:"default1"`
+					}{
+						Value: "woo!",
+					},
+				},
+			},
+			inputs: map[string]any{
+				"outer": map[string]any{
+					"inner": map[string]any{
+						"value": "woo!",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

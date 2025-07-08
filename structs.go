@@ -47,6 +47,7 @@ func (m *Struct) Validate(inputs map[string]any) (map[string][]string, error) {
 }
 
 func (m *Struct) Set(inputs map[string]any) error {
+	// log.Info("Set", "structure", m.structure)
 	err := SetStructFields(m.structure, Settings{
 		TagOrder:         m.tags,
 		AllowEnvOverride: false,

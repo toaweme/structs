@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/toaweme/structs/utils"
 )
@@ -36,10 +37,15 @@ func printFields(fields []Field) {
 
 // SetStructFields sets the fields of a struct based on the inputs provided
 func SetStructFields(structure any, settings Settings, inputs map[string]any) error {
+	// log.Info("SetStructFields", "structure", reflect.TypeOf(structure), "settings", settings)
 	fields, err := GetStructFields(structure, nil)
 	if err != nil {
 		return err
 	}
+
+	// for _, field := range fields {
+	// 	log.Info("GetStructFields", "field", field.Name, "type", field.Kind)
+	// }
 
 	// print recursive fields with nested field count
 	// printFields(fields)
@@ -53,8 +59,10 @@ func SetStructFields(structure any, settings Settings, inputs map[string]any) er
 }
 
 func SetFields(fields []Field, settings Settings, inputs map[string]any) error {
+	// log.Info("SetFields", "fields", len(fields))
 	for _, field := range fields {
 		if field.Kind == reflect.Struct {
+			// log.Info("SetFields.struct", "field", field.Name, "type", field.Kind, "tags", field.Tags)
 			err := SetFields(field.Fields, settings, inputs)
 			if err != nil {
 				return err
@@ -72,11 +80,12 @@ func SetFields(fields []Field, settings Settings, inputs map[string]any) error {
 }
 
 func SetField(field Field, settings Settings, inputs map[string]any) error {
+	// log.Info("SetField", "field", field.Name, "type", field.Kind, "tags", field.Tags)
 	// set default value if it exists
 	if field.Default != "" {
 		// check if field has already a value set
 		if !field.Value.IsValid() || field.Value.IsZero() {
-			// slog.Info("setting default value", "field", field.Name, "value", field.Default)
+			// log.Info("SetField.default", "field", field.Name, "value", field.Default)
 			err := setField(field, field.Default)
 			if err != nil {
 				return fmt.Errorf("failed to set default value for field[%s]: %w", field.Name, err)
@@ -121,6 +130,8 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 				if !settings.AllowTagOverride {
 					return nil
 				}
+			} else {
+				// log.Info("SetField.tag", "field", field.Name, "tag", tag, "not found in inputs")
 			}
 		}
 
@@ -160,7 +171,10 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 
 	// check fqn tag matches
 	for _, tag := range settings.TagOrder {
-		if val, ok := inputs[fqn.Tags[tag]]; ok {
+		fieldTag := fqn.Tags[tag]
+		// log.Info("SetField.tag1", "field", field.Name, "tag", tag, "fqnTag", fieldTag)
+		if val, ok := inputs[fieldTag]; ok {
+			// log.Info("SetField.tag2", "field", field.Name, "tag", tag, "value", val)
 			err := setField(field, val)
 			if err != nil {
 				return err
@@ -169,8 +183,29 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 			if !settings.AllowTagOverride {
 				return nil
 			}
+		} else {
+			// log.Info("SetField.tag", "field", field.Name, "tag", tag, "not found in inputs", "fqnTag", fieldTag)
+			split := strings.Split(fieldTag, ".")
+			if len(split) == 1 {
+				continue
+			}
+
+			found, value := findNestedValue(inputs, split)
+			if found {
+				// log.Info("SetField.nested", "field", field.Name, "tag", tag, "value", value)
+				err := setField(field, value)
+				if err != nil {
+					return err
+				}
+
+				if !settings.AllowTagOverride {
+					return nil
+				}
+			}
 		}
 	}
+
+	// log.Warn("SetField", "stage", "passed fqn tag checks", "field", field.Name)
 
 	// check fqn nested field matches
 	if field.Fields != nil {
@@ -183,6 +218,31 @@ func SetField(field Field, settings Settings, inputs map[string]any) error {
 	return nil
 }
 
+func findNestedValue(inputs map[string]any, path []string) (bool, any) {
+	current := inputs
+
+	// Navigate through all but the last key
+	for _, key := range path[:len(path)-1] {
+		value, exists := current[key]
+		if !exists {
+			return false, nil
+		}
+
+		// Check if the value is a map[string]any
+		if nestedMap, ok := value.(map[string]any); ok {
+			current = nestedMap
+		} else {
+			// Value exists but isn't a nested map, can't continue traversal
+			return false, nil
+		}
+	}
+
+	// Check for the final key
+	finalKey := path[len(path)-1]
+	value, exists := current[finalKey]
+	return exists, value
+}
+
 func setField(field Field, input any) error {
 	err := setValue(field.Name, input, field.Kind, field.Value)
 	if err != nil {
@@ -193,6 +253,7 @@ func setField(field Field, input any) error {
 }
 
 func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue reflect.Value) error {
+	// log.Info("setValue", "field", fieldName, "value", value, "type", fieldType)
 	switch fieldType {
 	case reflect.String:
 		s, err := utils.ToString(value)
