@@ -246,7 +246,7 @@ func findNestedValue(inputs map[string]any, path []string) (bool, any) {
 func setField(field Field, input any) error {
 	err := setValue(field.Name, input, field.Kind, field.Value)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to set field[%s]: %w", field.Name, err)
 	}
 
 	return nil

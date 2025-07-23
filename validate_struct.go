@@ -2,6 +2,7 @@ package structs
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func ValidateStructFields(ruleFuncs map[string]RuleFunc, structFields []Field, values map[string]any, validationMessageTag string, tagPriority ...string) (map[string][]string, error) {
@@ -15,7 +16,7 @@ func ValidateStructFields(ruleFuncs map[string]RuleFunc, structFields []Field, v
 				fieldName = fieldNameByTagPriority
 			}
 
-			fieldValidationRules, err := validateRule(ruleFuncs, rule, fieldName, values, structField.Default)
+			fieldValidationRules, err := validateRule(ruleFuncs, rule, fieldName, values, structField.Default, structField.Value)
 			if err != nil {
 				return nil, fmt.Errorf("error running validator function for rule '%s' field '%s': %w", rule.Name, fieldName, err)
 			}
@@ -45,13 +46,13 @@ func getTagByPriority(tags map[string]string, priority []string) string {
 	return ""
 }
 
-func validateRule(funcs map[string]RuleFunc, rule Rule, structFieldName string, values map[string]any, defaultValue string) (map[string][]string, error) {
+func validateRule(funcs map[string]RuleFunc, rule Rule, structFieldName string, values map[string]any, defaultValue string, fieldValue reflect.Value) (map[string][]string, error) {
 	validationFunc, ok := funcs[rule.Name]
 	if !ok {
 		return nil, fmt.Errorf("struct field %s rule %s not found", structFieldName, rule.Name)
 	}
 
-	errors, err := validationFunc(structFieldName, values, defaultValue, rule.Args)
+	errors, err := validationFunc(structFieldName, values, defaultValue, fieldValue, rule.Args)
 	if err != nil {
 		return nil, fmt.Errorf("validation error for field %s rule %s: %w", structFieldName, rule.Name, err)
 	}
@@ -59,8 +60,6 @@ func validateRule(funcs map[string]RuleFunc, rule Rule, structFieldName string, 
 	if len(errors) == 0 {
 		return nil, nil
 	}
-
-	// log.Trace().Msgf("validation errors for field %s rule %s: %v", structFieldName, rule.Name, errors)
 
 	return errors, nil
 }

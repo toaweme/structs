@@ -1,16 +1,22 @@
 package structs
 
-import "strings"
+import (
+	"reflect"
+	"strings"
+)
 
 var DefaultRules = map[string]RuleFunc{
 	"required": Required,
 }
 
-type RuleFunc func(fieldName string, values map[string]any, defaultValue string, args []string) (map[string][]string, error)
+type RuleFunc func(fieldName string, values map[string]any, defaultValue string, fieldValue reflect.Value, args []string) (map[string][]string, error)
 
-var Required RuleFunc = func(fieldName string, values map[string]any, defaultValue string, args []string) (map[string][]string, error) {
+var Required RuleFunc = func(fieldName string, values map[string]any, defaultValue string, fieldValue reflect.Value, args []string) (map[string][]string, error) {
 	value, ok := values[fieldName]
 	if !ok && defaultValue == "" {
+		if fieldValue.IsValid() && !fieldValue.IsZero() {
+			return nil, nil
+		}
 		errors := map[string][]string{
 			fieldName: {"required"},
 		}
