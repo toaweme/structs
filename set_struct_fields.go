@@ -310,8 +310,47 @@ func setSliceValue(value any, fieldValue reflect.Value) error {
 	newSlice := reflect.MakeSlice(fieldType, len(slice), len(slice))
 
 	for i, val := range slice {
-		elemVal := reflect.ValueOf(val)
+		// Special case: if element type is a struct and value is a map,
+		// populate struct fields from map
+		if elemType.Kind() == reflect.Struct {
+			valReflect := reflect.ValueOf(val)
+			if valReflect.Kind() == reflect.Map {
+				newStruct := reflect.New(elemType).Elem()
 
+				// Iterate through struct fields
+				for j := 0; j < elemType.NumField(); j++ {
+					field := elemType.Field(j)
+					structFieldValue := newStruct.Field(j)
+
+					if !structFieldValue.CanSet() {
+						continue
+					}
+
+					// try to find matching key in map (case-insensitive)
+					for _, key := range valReflect.MapKeys() {
+						keyStr := fmt.Sprintf("%v", key.Interface())
+						if strings.EqualFold(keyStr, field.Name) {
+							mapValue := valReflect.MapIndex(key).Interface()
+							err := setValue(field.Name, mapValue, field.Type.Kind(), structFieldValue)
+							if err != nil {
+								return fmt.Errorf("failed to set field %s: %w", field.Name, err)
+							}
+							break
+						}
+					}
+				}
+
+				newSlice.Index(i).Set(newStruct)
+				continue
+			}
+		}
+
+		if val == nil {
+			newSlice.Index(i).Set(reflect.Zero(elemType))
+			continue
+		}
+
+		elemVal := reflect.ValueOf(val)
 		if !elemVal.Type().AssignableTo(elemType) {
 			if elemVal.Type().ConvertibleTo(elemType) {
 				elemVal = elemVal.Convert(elemType)
