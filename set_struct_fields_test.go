@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -350,6 +351,308 @@ func Test_SetStructFields(t *testing.T) {
 			err := SetStructFields(tt.structure, tt.settings, tt.inputs)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, tt.wantErr, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.EqualValues(t, tt.expected, tt.structure)
+		})
+	}
+}
+
+type metadata struct {
+	Title       string `json:"title"`
+	URL         string `json:"url"`
+	Description string `json:"description"`
+}
+
+func Test_SetStructFieldsWithStructSlice(t *testing.T) {
+	tests := []struct {
+		name      string
+		structure any
+		inputs    map[string]any
+		settings  Settings
+		expected  any
+		wantErr   error
+	}{
+		{
+			name: "inputs are slices",
+			structure: &struct {
+				Field1 []string
+				Field2 []int
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Field1": []string{"value101"},
+				"Field2": []int{10},
+			},
+			expected: &struct {
+				Field1 []string
+				Field2 []int
+			}{Field1: []string{"value101"}, Field2: []int{10}},
+		},
+		{
+			name: "inputs are slices of structs",
+			structure: &struct {
+				Field1 []metadata
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Field1": []metadata{
+					{
+						Title:       "value101",
+						URL:         "value102",
+						Description: "value103",
+					},
+				},
+			},
+			expected: &struct {
+				Field1 []metadata
+			}{Field1: []metadata{
+				{
+					Title:       "value101",
+					URL:         "value102",
+					Description: "value103",
+				},
+			}},
+		},
+		{
+			name: "inputs are slices of map[string]any",
+			structure: &struct {
+				Field1 []metadata
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Field1": []map[string]any{
+					{
+						"title":       "value101",
+						"url":         "value102",
+						"description": "value103",
+					},
+				},
+			},
+			expected: &struct {
+				Field1 []metadata
+			}{Field1: []metadata{
+				{
+					Title:       "value101",
+					URL:         "value102",
+					Description: "value103",
+				},
+			}},
+		},
+		// Add these test cases to your existing Test_SetStructFieldsWithStructSlice function
+
+		{
+			name: "slice of bools from interface slice",
+			structure: &struct {
+				Flags []bool
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Flags": []any{true, false, true, "true", "false"},
+			},
+			expected: &struct {
+				Flags []bool
+			}{Flags: []bool{true, false, true, true, false}},
+			wantErr: errors.New("failed to set field[Flags]: cannot assign or convert string to bool"),
+		},
+		{
+			name: "slice of floats from mixed numeric types",
+			structure: &struct {
+				Scores []float64
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Scores": []any{1.5, 2, 3.7, "4.2"},
+			},
+			expected: &struct {
+				Scores []float64
+			}{Scores: []float64{1.5, 2.0, 3.7, 4.2}},
+			wantErr: errors.New("failed to set field[Scores]: cannot assign or convert string to float64"),
+		},
+		{
+			name: "nested struct slice with maps of different key types",
+			structure: &struct {
+				Items []struct {
+					ID    int
+					Name  string
+					Price float64
+				}
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Items": []map[string]any{
+					{"id": 1, "name": "Item1", "price": 10.5},
+					{"id": "2", "name": "Item2", "price": 20.75},
+				},
+			},
+			expected: &struct {
+				Items []struct {
+					ID    int
+					Name  string
+					Price float64
+				}
+			}{Items: []struct {
+				ID    int
+				Name  string
+				Price float64
+			}{
+				{ID: 1, Name: "Item1", Price: 10.5},
+				{ID: 2, Name: "Item2", Price: 20.75},
+			}},
+		},
+		{
+			name: "slice of structs with nested slices",
+			structure: &struct {
+				Users []struct {
+					Name  string
+					Roles []string
+				}
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Users": []map[string]any{
+					{"name": "Alice", "roles": []string{"admin", "user"}},
+					{"name": "Bob", "roles": []any{"user"}},
+				},
+			},
+			expected: &struct {
+				Users []struct {
+					Name  string
+					Roles []string
+				}
+			}{Users: []struct {
+				Name  string
+				Roles []string
+			}{
+				{Name: "Alice", Roles: []string{"admin", "user"}},
+				{Name: "Bob", Roles: []string{"user"}},
+			}},
+		},
+		{
+			name: "empty slice initialization",
+			structure: &struct {
+				Tags []string
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Tags": []string{},
+			},
+			expected: &struct {
+				Tags []string
+			}{Tags: []string{}},
+		},
+		{
+			name: "slice of interfaces with mixed types",
+			structure: &struct {
+				Mixed []interface{}
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Mixed": []any{"string", 123, 45.67, true, nil},
+			},
+			expected: &struct {
+				Mixed []interface{}
+			}{Mixed: []interface{}{"string", 123, 45.67, true, nil}},
+		},
+		{
+			name: "complex nested structure with multiple slice levels",
+			structure: &struct {
+				Departments []struct {
+					Name  string
+					Teams []struct {
+						TeamName string
+						Members  []string
+					}
+				}
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Departments": []map[string]any{
+					{
+						"name": "Engineering",
+						"teams": []map[string]any{
+							{"teamname": "Backend", "members": []string{"Alice", "Bob"}},
+							{"teamname": "Frontend", "members": []string{"Charlie"}},
+						},
+					},
+				},
+			},
+			expected: &struct {
+				Departments []struct {
+					Name  string
+					Teams []struct {
+						TeamName string
+						Members  []string
+					}
+				}
+			}{Departments: []struct {
+				Name  string
+				Teams []struct {
+					TeamName string
+					Members  []string
+				}
+			}{
+				{
+					Name: "Engineering",
+					Teams: []struct {
+						TeamName string
+						Members  []string
+					}{
+						{TeamName: "Backend", Members: []string{"Alice", "Bob"}},
+						{TeamName: "Frontend", Members: []string{"Charlie"}},
+					},
+				},
+			}},
+		},
+		{
+			name: "slice of maps (not structs) - map type fields",
+			structure: &struct {
+				Data []map[string]string
+			}{},
+			settings: Settings{
+				AllowTagOverride: true,
+			},
+			inputs: map[string]any{
+				"Data": []map[string]string{
+					{"key1": "value1", "key2": "value2"},
+					{"key3": "value3"},
+				},
+			},
+			expected: &struct {
+				Data []map[string]string
+			}{Data: []map[string]string{
+				{"key1": "value1", "key2": "value2"},
+				{"key3": "value3"},
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := SetStructFields(tt.structure, tt.settings, tt.inputs)
+			if tt.wantErr != nil {
+				assert.ErrorContains(t, tt.wantErr, err.Error())
 				return
 			}
 			assert.NoError(t, err)
