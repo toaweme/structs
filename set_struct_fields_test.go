@@ -660,3 +660,48 @@ func Test_SetStructFieldsWithStructSlice(t *testing.T) {
 		})
 	}
 }
+
+func Test_SetStructFields_NestedTagOmitempty(t *testing.T) {
+	// reproduces the bug where nested struct fields whose json tags carry
+	// ",omitempty" (or similar suffixes) silently fail to populate from a
+	// nested map[string]any input. before the parseTags fix, fqn lookups
+	// were keyed against "query.filters,omitempty" instead of "query.filters".
+
+	type inner struct {
+		Filters []map[string]any `json:"filters,omitempty"`
+		Limit   int              `json:"limit,omitempty"`
+		Offset  int              `json:"offset,omitempty"`
+	}
+
+	type outer struct {
+		OrgID string `json:"org_id"`
+		Query inner  `json:"query"`
+	}
+
+	got := &outer{}
+	inputs := map[string]any{
+		"org_id": "org-1",
+		"query": map[string]any{
+			"filters": []map[string]any{
+				{"field": "bank_iban", "op": "eq", "value": "LT123"},
+			},
+			"limit":  5,
+			"offset": 10,
+		},
+	}
+
+	err := SetStructFields(got, Settings{TagOrder: DefaultTags}, inputs)
+	assert.NoError(t, err)
+	assert.Equal(t, "org-1", got.OrgID)
+	assert.Equal(t, 5, got.Query.Limit)
+	assert.Equal(t, 10, got.Query.Offset)
+	assert.Len(t, got.Query.Filters, 1)
+}
+
+func Test_ParseTags_StripsOmitempty(t *testing.T) {
+	tags := parseTags(`json:"filters,omitempty" yaml:"filters,omitempty,flow" rules:"required"`)
+	assert.Equal(t, "filters", tags["json"])
+	assert.Equal(t, "filters", tags["yaml"])
+	// non-stdlib tags without commas are unaffected
+	assert.Equal(t, "required", tags["rules"])
+}

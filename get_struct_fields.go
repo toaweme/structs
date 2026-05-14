@@ -80,6 +80,13 @@ func parseTags(line string) map[string]string {
 				// exiting a tag value
 				lastTagName = strings.TrimSpace(lastTagName)
 				lastTagValue = strings.TrimSpace(lastTagValue)
+				// strip stdlib-style options like ",omitempty" so the stored
+				// value is just the name (e.g. "filters" not "filters,omitempty").
+				// matches encoding/json semantics and keeps FQN/lookup paths
+				// from matching against decorated tag strings.
+				if idx := strings.IndexByte(lastTagValue, ','); idx >= 0 {
+					lastTagValue = lastTagValue[:idx]
+				}
 				result[lastTagName] = lastTagValue
 				lastTagName = ""
 				lastTagValue = ""
