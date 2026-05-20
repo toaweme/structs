@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	// "github.com/davecgh/go-spew/spew"
-
 )
 
 func ToFloat(value any) (float64, error) {
