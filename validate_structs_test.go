@@ -55,7 +55,7 @@ func Test_Validate_StructFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fields, err := GetStructFields(tt.input, nil)
+			fields, err := GetStructFields(tt.input, nil, DefaultEncodingTags)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 				return

@@ -128,7 +128,7 @@ func Test_GetStructFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := GetStructFields(tt.input, nil)
+			result, err := GetStructFields(tt.input, nil, DefaultEncodingTags)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, tt.wantErr, err)
 				return
@@ -212,7 +212,7 @@ func Test_parseTags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := parseTags(tt.input)
+			result := parseTags(tt.input, DefaultEncodingTags)
 
 			assert.Equal(t, tt.expected, result)
 		})

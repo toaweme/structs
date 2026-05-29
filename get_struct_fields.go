@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func GetStructFields(structure any, parent *Field) ([]Field, error) {
+func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Field, error) {
 	val := reflect.ValueOf(structure)
 	if val.Kind() != reflect.Ptr {
 		return nil, ErrInputPointer
@@ -23,11 +23,11 @@ func GetStructFields(structure any, parent *Field) ([]Field, error) {
 		field := typ.Field(i)
 		fieldValue := val.Field(i)
 
-		tags := parseTags(string(field.Tag))
+		tags := parseTags(string(field.Tag), encodingTags)
 		f := NewField(field.Name, field.Type.Kind(), fieldValue, tags, parent)
 
 		if field.Type.Kind() == reflect.Struct {
-			nestedFields, err := GetStructFields(val.Field(i).Addr().Interface(), &f)
+			nestedFields, err := GetStructFields(val.Field(i).Addr().Interface(), &f, encodingTags)
 			if err != nil {
 				return nil, err
 			}
@@ -47,7 +47,7 @@ func GetStructFields(structure any, parent *Field) ([]Field, error) {
 // parseTags extracts inputs and their inputs from a given line of text
 // arg:"cwd" short:"c" help:"Current working directory"
 // The function returns a map: {"arg": "cwd", "short": "c", "help": "Current working directory"}
-func parseTags(line string) map[string]string {
+func parseTags(line string, encodingTags []string) map[string]string {
 	line = strings.TrimSpace(line)
 	result := make(map[string]string)
 
@@ -80,12 +80,15 @@ func parseTags(line string) map[string]string {
 				// exiting a tag value
 				lastTagName = strings.TrimSpace(lastTagName)
 				lastTagValue = strings.TrimSpace(lastTagValue)
-				// strip stdlib-style options like ",omitempty" so the stored
-				// value is just the name (e.g. "filters" not "filters,omitempty").
-				// matches encoding/json semantics and keeps FQN/lookup paths
-				// from matching against decorated tag strings.
-				if idx := strings.IndexByte(lastTagValue, ','); idx >= 0 {
-					lastTagValue = lastTagValue[:idx]
+				// comma-suffixed options (",omitempty", ",flow", ...) are a
+				// convention of encoding tags only. strip them for those tags so
+				// the stored value is just the name (e.g. "filters" not
+				// "filters,omitempty"); freeform tags (help, default, rules, ...)
+				// keep their value verbatim.
+				if isEncodingTag(lastTagName, encodingTags) {
+					if idx := strings.IndexByte(lastTagValue, ','); idx >= 0 {
+						lastTagValue = lastTagValue[:idx]
+					}
 				}
 				result[lastTagName] = lastTagValue
 				lastTagName = ""
@@ -104,4 +107,15 @@ func parseTags(line string) map[string]string {
 	}
 
 	return result
+}
+
+// isEncodingTag reports whether name is one of encodingTags, the set of tags
+// whose values use comma-separated options. See DefaultEncodingTags.
+func isEncodingTag(name string, encodingTags []string) bool {
+	for _, t := range encodingTags {
+		if t == name {
+			return true
+		}
+	}
+	return false
 }

@@ -690,7 +690,7 @@ func Test_SetStructFields_NestedTagOmitempty(t *testing.T) {
 		},
 	}
 
-	err := SetStructFields(got, Settings{TagOrder: DefaultTags}, inputs)
+	err := SetStructFields(got, Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}, inputs)
 	assert.NoError(t, err)
 	assert.Equal(t, "org-1", got.OrgID)
 	assert.Equal(t, 5, got.Query.Limit)
@@ -699,7 +699,7 @@ func Test_SetStructFields_NestedTagOmitempty(t *testing.T) {
 }
 
 func Test_ParseTags_StripsOmitempty(t *testing.T) {
-	tags := parseTags(`json:"filters,omitempty" yaml:"filters,omitempty,flow" rules:"required"`)
+	tags := parseTags(`json:"filters,omitempty" yaml:"filters,omitempty,flow" rules:"required"`, DefaultEncodingTags)
 	assert.Equal(t, "filters", tags["json"])
 	assert.Equal(t, "filters", tags["yaml"])
 	// non-stdlib tags without commas are unaffected

@@ -26,6 +26,10 @@ type Settings struct {
 	// if true, only the first tag that matches will be used and if nothing is matched
 	// we'll look for the field name as the structure key
 	AllowTagOverride bool
+
+	// EncodingTags are the tags whose values use comma-separated options (see
+	// DefaultEncodingTags). Empty disables comma stripping.
+	EncodingTags []string
 }
 
 func printFields(fields []Field) {
@@ -38,7 +42,7 @@ func printFields(fields []Field) {
 // SetStructFields sets the fields of a struct based on the inputs provided
 func SetStructFields(structure any, settings Settings, inputs map[string]any) error {
 	// log.Info("SetStructFields", "structure", reflect.TypeOf(structure), "settings", settings)
-	fields, err := GetStructFields(structure, nil)
+	fields, err := GetStructFields(structure, nil, settings.EncodingTags)
 	if err != nil {
 		return err
 	}
