@@ -1,7 +1,6 @@
 package structs
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -462,7 +461,6 @@ func Test_SetStructFieldsWithStructSlice(t *testing.T) {
 			expected: &struct {
 				Flags []bool
 			}{Flags: []bool{true, false, true, true, false}},
-			wantErr: errors.New("failed to set field[Flags]: cannot assign or convert string to bool"),
 		},
 		{
 			name: "slice of floats from mixed numeric types",
@@ -478,7 +476,6 @@ func Test_SetStructFieldsWithStructSlice(t *testing.T) {
 			expected: &struct {
 				Scores []float64
 			}{Scores: []float64{1.5, 2.0, 3.7, 4.2}},
-			wantErr: errors.New("failed to set field[Scores]: cannot assign or convert string to float64"),
 		},
 		{
 			name: "nested struct slice with maps of different key types",
@@ -696,6 +693,82 @@ func Test_SetStructFields_NestedTagOmitempty(t *testing.T) {
 	assert.Equal(t, 5, got.Query.Limit)
 	assert.Equal(t, 10, got.Query.Offset)
 	assert.Len(t, got.Query.Filters, 1)
+}
+
+func Test_SetField_CommaSeparatedSlice(t *testing.T) {
+	type withDefaultSep struct {
+		Tags []string `arg:"tags"`
+	}
+	type withCustomSep struct {
+		Tags []string `arg:"tags" sep:"|"`
+	}
+	type withInts struct {
+		Ports []int `arg:"ports"`
+	}
+
+	tests := []struct {
+		name   string
+		target any
+		inputs map[string]any
+		assert func(t *testing.T, target any)
+	}{
+		{
+			name:   "default comma separator splits and trims",
+			target: &withDefaultSep{},
+			inputs: map[string]any{"tags": "a, b ,c"},
+			assert: func(t *testing.T, target any) {
+				assert.Equal(t, []string{"a", "b", "c"}, target.(*withDefaultSep).Tags)
+			},
+		},
+		{
+			name:   "single value becomes one element",
+			target: &withDefaultSep{},
+			inputs: map[string]any{"tags": "solo"},
+			assert: func(t *testing.T, target any) {
+				assert.Equal(t, []string{"solo"}, target.(*withDefaultSep).Tags)
+			},
+		},
+		{
+			name:   "empty string yields empty slice",
+			target: &withDefaultSep{},
+			inputs: map[string]any{"tags": ""},
+			assert: func(t *testing.T, target any) {
+				assert.Equal(t, []string{}, target.(*withDefaultSep).Tags)
+			},
+		},
+		{
+			name:   "custom separator via sep tag",
+			target: &withCustomSep{},
+			inputs: map[string]any{"tags": "a|b|c"},
+			assert: func(t *testing.T, target any) {
+				assert.Equal(t, []string{"a", "b", "c"}, target.(*withCustomSep).Tags)
+			},
+		},
+		{
+			name:   "already a slice passes through untouched",
+			target: &withDefaultSep{},
+			inputs: map[string]any{"tags": []string{"x,y", "z"}},
+			assert: func(t *testing.T, target any) {
+				assert.Equal(t, []string{"x,y", "z"}, target.(*withDefaultSep).Tags)
+			},
+		},
+		{
+			name:   "int slice splits and converts",
+			target: &withInts{},
+			inputs: map[string]any{"ports": "8080,9090"},
+			assert: func(t *testing.T, target any) {
+				assert.Equal(t, []int{8080, 9090}, target.(*withInts).Ports)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := SetStructFields(tt.target, Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}, tt.inputs)
+			assert.NoError(t, err)
+			tt.assert(t, tt.target)
+		})
+	}
 }
 
 func Test_ParseTags_StripsOmitempty(t *testing.T) {

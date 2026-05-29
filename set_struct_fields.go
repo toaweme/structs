@@ -247,13 +247,55 @@ func findNestedValue(inputs map[string]any, path []string) (bool, any) {
 	return exists, value
 }
 
+const separatorTag = "sep"
+const defaultSeparator = ","
+
 func setField(field Field, input any) error {
+	if field.Kind == reflect.Slice {
+		input = splitSliceInput(field, input)
+	}
+
 	err := setValue(field.Name, input, field.Kind, field.Value)
 	if err != nil {
 		return fmt.Errorf("failed to set field[%s]: %w", field.Name, err)
 	}
 
 	return nil
+}
+
+// splitSliceInput turns a single string into a slice of trimmed elements,
+// splitting on the field's `sep` tag (default ","). It only applies when the
+// input is a string and the slice element is a scalar, so already-structured
+// inputs ([]any from decoded config, struct-element slices) pass through
+// untouched. This is what lets `--tags=a,b,c` and `TAGS=a,b,c` become
+// ["a","b","c"] instead of a single-element ["a,b,c"].
+func splitSliceInput(field Field, input any) any {
+	s, ok := input.(string)
+	if !ok {
+		return input
+	}
+	if !field.Value.IsValid() || field.Value.Kind() != reflect.Slice {
+		return input
+	}
+	if field.Value.Type().Elem().Kind() == reflect.Struct {
+		return input
+	}
+
+	if s == "" {
+		return []string{}
+	}
+
+	sep := field.Tags[separatorTag]
+	if sep == "" {
+		sep = defaultSeparator
+	}
+
+	parts := strings.Split(s, sep)
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+
+	return parts
 }
 
 func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue reflect.Value) error {
@@ -351,6 +393,18 @@ func setSliceValue(value any, fieldValue reflect.Value) error {
 
 		if val == nil {
 			newSlice.Index(i).Set(reflect.Zero(elemType))
+			continue
+		}
+
+		// a string element targeting a scalar slice (e.g. []int from "8080,9090")
+		// is coerced through the same converters used for top-level fields, since
+		// reflect cannot convert "8080" to int directly.
+		if s, ok := val.(string); ok && elemType.Kind() != reflect.String {
+			elem := reflect.New(elemType).Elem()
+			if err := setValue("", s, elemType.Kind(), elem); err != nil {
+				return fmt.Errorf("failed to convert %q to %s: %w", s, elemType, err)
+			}
+			newSlice.Index(i).Set(elem)
 			continue
 		}
 
