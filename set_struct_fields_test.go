@@ -2,8 +2,6 @@ package structs
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_SetStructFields(t *testing.T) {
@@ -349,11 +347,11 @@ func Test_SetStructFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := SetStructFields(tt.structure, tt.settings, tt.inputs)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, tt.wantErr, err)
+				requireErrorIs(t, err, tt.wantErr)
 				return
 			}
-			assert.NoError(t, err)
-			assert.EqualValues(t, tt.expected, tt.structure)
+			requireNoError(t, err)
+			requireEqual(t, tt.expected, tt.structure)
 		})
 	}
 }
@@ -649,11 +647,11 @@ func Test_SetStructFieldsWithStructSlice(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := SetStructFields(tt.structure, tt.settings, tt.inputs)
 			if tt.wantErr != nil {
-				assert.ErrorContains(t, tt.wantErr, err.Error())
+				requireErrorContains(t, err, tt.wantErr.Error())
 				return
 			}
-			assert.NoError(t, err)
-			assert.EqualValues(t, tt.expected, tt.structure)
+			requireNoError(t, err)
+			requireEqual(t, tt.expected, tt.structure)
 		})
 	}
 }
@@ -688,11 +686,11 @@ func Test_SetStructFields_NestedTagOmitempty(t *testing.T) {
 	}
 
 	err := SetStructFields(got, Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}, inputs)
-	assert.NoError(t, err)
-	assert.Equal(t, "org-1", got.OrgID)
-	assert.Equal(t, 5, got.Query.Limit)
-	assert.Equal(t, 10, got.Query.Offset)
-	assert.Len(t, got.Query.Filters, 1)
+	requireNoError(t, err)
+	requireEqual(t, "org-1", got.OrgID)
+	requireEqual(t, 5, got.Query.Limit)
+	requireEqual(t, 10, got.Query.Offset)
+	requireLen(t, got.Query.Filters, 1)
 }
 
 func Test_SetField_CommaSeparatedSlice(t *testing.T) {
@@ -717,7 +715,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": "a, b ,c"},
 			assert: func(t *testing.T, target any) {
-				assert.Equal(t, []string{"a", "b", "c"}, target.(*withDefaultSep).Tags)
+				requireEqual(t, []string{"a", "b", "c"}, target.(*withDefaultSep).Tags)
 			},
 		},
 		{
@@ -725,7 +723,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": "solo"},
 			assert: func(t *testing.T, target any) {
-				assert.Equal(t, []string{"solo"}, target.(*withDefaultSep).Tags)
+				requireEqual(t, []string{"solo"}, target.(*withDefaultSep).Tags)
 			},
 		},
 		{
@@ -733,7 +731,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": ""},
 			assert: func(t *testing.T, target any) {
-				assert.Equal(t, []string{}, target.(*withDefaultSep).Tags)
+				requireEqual(t, []string{}, target.(*withDefaultSep).Tags)
 			},
 		},
 		{
@@ -741,7 +739,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withCustomSep{},
 			inputs: map[string]any{"tags": "a|b|c"},
 			assert: func(t *testing.T, target any) {
-				assert.Equal(t, []string{"a", "b", "c"}, target.(*withCustomSep).Tags)
+				requireEqual(t, []string{"a", "b", "c"}, target.(*withCustomSep).Tags)
 			},
 		},
 		{
@@ -749,7 +747,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": []string{"x,y", "z"}},
 			assert: func(t *testing.T, target any) {
-				assert.Equal(t, []string{"x,y", "z"}, target.(*withDefaultSep).Tags)
+				requireEqual(t, []string{"x,y", "z"}, target.(*withDefaultSep).Tags)
 			},
 		},
 		{
@@ -757,7 +755,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withInts{},
 			inputs: map[string]any{"ports": "8080,9090"},
 			assert: func(t *testing.T, target any) {
-				assert.Equal(t, []int{8080, 9090}, target.(*withInts).Ports)
+				requireEqual(t, []int{8080, 9090}, target.(*withInts).Ports)
 			},
 		},
 	}
@@ -765,7 +763,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := SetStructFields(tt.target, Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}, tt.inputs)
-			assert.NoError(t, err)
+			requireNoError(t, err)
 			tt.assert(t, tt.target)
 		})
 	}
@@ -773,8 +771,8 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 
 func Test_ParseTags_StripsOmitempty(t *testing.T) {
 	tags := parseTags(`json:"filters,omitempty" yaml:"filters,omitempty,flow" rules:"required"`, DefaultEncodingTags)
-	assert.Equal(t, "filters", tags["json"])
-	assert.Equal(t, "filters", tags["yaml"])
+	requireEqual(t, "filters", tags["json"])
+	requireEqual(t, "filters", tags["yaml"])
 	// non-stdlib tags without commas are unaffected
-	assert.Equal(t, "required", tags["rules"])
+	requireEqual(t, "required", tags["rules"])
 }

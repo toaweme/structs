@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+// GetStructFields reflects over structure (a pointer to a struct) and returns
+// its fields as []Field, recursing into nested structs and building each nested
+// field's FQN. encodingTags selects which tags get their comma options stripped
+// (see DefaultEncodingTags). It returns ErrInputPointer or ErrInputPointerStruct
+// when structure is not a pointer to a struct.
 func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Field, error) {
 	val := reflect.ValueOf(structure)
 	if val.Kind() != reflect.Ptr {

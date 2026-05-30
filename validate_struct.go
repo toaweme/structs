@@ -5,6 +5,10 @@ import (
 	"reflect"
 )
 
+// ValidateStructFields runs each field's rules (looked up in ruleFuncs) against
+// values and returns field name to error messages. Field names are resolved by
+// tagPriority, then overridden by the validationMessageTag value when a field
+// carries one. An empty result means everything passed.
 func ValidateStructFields(ruleFuncs map[string]RuleFunc, structFields []Field, values map[string]any, validationMessageTag string, tagPriority ...string) (map[string][]string, error) {
 	validationErrors := make(map[string][]string)
 	for _, structField := range structFields {

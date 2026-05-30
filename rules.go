@@ -6,13 +6,23 @@ import (
 	"strings"
 )
 
+// DefaultRules is the built-in rule set, keyed by the name used in a `rules:`
+// tag. Pass it to New/ValidateStructFields, or build your own map (optionally
+// extending this one) to register custom RuleFuncs.
 var DefaultRules = map[string]RuleFunc{
 	"required": Required,
 	"oneof":    OneOf,
 }
 
+// RuleFunc validates one field against one rule. It receives the lookup key
+// (fieldName, already resolved by tag priority), the full input values, the
+// field's default, its reflect.Value, and the rule's args. It returns a map of
+// field name to error messages (empty when valid); the returned error is for
+// internal failures, not validation failures.
 type RuleFunc func(fieldName string, values map[string]any, defaultValue string, fieldValue reflect.Value, args []string) (map[string][]string, error)
 
+// Required fails when a field has no non-empty input and no default and the
+// field's current value is zero. Whitespace-only string inputs count as empty.
 var Required RuleFunc = func(fieldName string, values map[string]any, defaultValue string, fieldValue reflect.Value, args []string) (map[string][]string, error) {
 	value, ok := values[fieldName]
 	if !ok && defaultValue == "" {

@@ -5,8 +5,12 @@ import (
 	"strings"
 )
 
+// Rule is a single validation rule parsed from a `rules:` tag entry. For
+// `rules:"oneof:json,yaml"` Name is "oneof" and Args is ["json", "yaml"].
 type Rule struct {
+	// Name is the rule identifier, used to look up its RuleFunc in the rule set.
 	Name string
+	// Args are the colon-suffixed, comma-separated arguments, nil if none.
 	Args []string
 }
 
@@ -28,21 +32,37 @@ const defaultValueTag = "default"
 const envValueTag = "env"
 const validationTag = "rules"
 
+// Field is the reflected description of one struct field, produced by
+// GetStructFields. Nested struct fields are described recursively through
+// Fields, and each nested field also carries an FQN giving its dotted path and
+// glued tags relative to the root struct.
 type Field struct {
+	// Name is the Go struct field name (e.g. "Field1").
 	Name string
+	// Type is the string form of Kind (e.g. "string", "struct").
 	Type string
+	// Tags holds the parsed struct tags as tag name to value (e.g. {"json": "field_1"}).
 	Tags map[string]string
-	// Default is string because it's extracted from the struct tag
-	// we'll convert it to the appropriate type when setting the field
+	// Default is the `default:` tag value, kept as a string because it comes
+	// from the tag; it is converted to the field's type when the field is set.
 	Default string
-	Kind    reflect.Kind
-	Value   reflect.Value
-	Rules   []Rule
-	FQN     *Field
-	Parent  *Field
-	Fields  []Field
+	// Kind is the field's reflect.Kind.
+	Kind reflect.Kind
+	// Value is the addressable reflect.Value backing the field, used to set it.
+	Value reflect.Value
+	// Rules are the validation rules parsed from the `rules:` tag.
+	Rules []Rule
+	// FQN is the fully-qualified view of a nested field: Name and Tags glued to
+	// the parent's with "." (or "_" for the `env` tag). nil for top-level fields.
+	FQN *Field
+	// Parent points to the enclosing struct's field, nil for top-level fields.
+	Parent *Field
+	// Fields are the nested fields when Kind is reflect.Struct.
+	Fields []Field
 }
 
+// NewField builds a Field from a struct field's name, kind, value, and parsed
+// tags, extracting the `default:` and `rules:` tags into Default and Rules.
 func NewField(name string, dataType reflect.Kind, value reflect.Value, tags map[string]string, parentField *Field) Field {
 	f := Field{Name: name, Kind: dataType, Type: dataType.String()}
 	if defaultVal, ok := tags[defaultValueTag]; ok {
@@ -77,14 +97,12 @@ func (f Field) buildFQN() *Field {
 	// `env` tag should be glued with "_"
 	for parent != nil {
 		newField.Name = parent.Name + "." + newField.Name
-		// slog.Info("newField", "name", newField.Name)
 		for tag, value := range parent.Tags {
 			if _, ok := newField.Tags[tag]; !ok {
 				continue
 			}
 			if tag == envValueTag {
 				newField.Tags[tag] = value + "_" + newField.Tags[tag]
-				// slog.Info("env", "name", newField.Tags[tag])
 			} else {
 				newField.Tags[tag] = value + "." + newField.Tags[tag]
 			}
@@ -96,6 +114,9 @@ func (f Field) buildFQN() *Field {
 	return newField
 }
 
+// MapDefaultValues returns a copy of values with each field's `default:` tag
+// value filled in under the field's tag name, for fields that have no non-empty
+// value yet. Defaults are keyed by the first matching tag in tagPriority.
 func MapDefaultValues(fields []Field, values map[string]any, tagPriority ...string) map[string]any {
 	valuesCopy := make(map[string]any)
 	for k, v := range values {
@@ -106,18 +127,20 @@ func MapDefaultValues(fields []Field, values map[string]any, tagPriority ...stri
 		tag = strings.ToLower(tag)
 
 		for _, field := range fields {
-			foundValue, ok := values[field.Name]
-			if ok && foundValue != "" {
+			fieldNameByTag, ok := field.Tags[tag]
+			if !ok || field.Default == "" {
 				continue
 			}
 
-			fieldNameByTag, ok := field.Tags[tag]
-			if ok {
-				if field.Default != "" {
-					valuesCopy[fieldNameByTag] = field.Default
-					// log.Trace().Str("field", field.Name).Str("tag", tag).Str("value", field.Default).Msg("setting default value")
-				}
+			// don't override a value SetField could match, by tag name or field name
+			if v, ok := values[fieldNameByTag]; ok && v != "" {
+				continue
 			}
+			if v, ok := values[field.Name]; ok && v != "" {
+				continue
+			}
+
+			valuesCopy[fieldNameByTag] = field.Default
 		}
 	}
 

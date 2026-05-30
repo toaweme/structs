@@ -2,8 +2,6 @@ package structs
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type TestStructWithRules struct {
@@ -52,10 +50,10 @@ func Test_Validate_OneOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fields, err := GetStructFields(&TestStructWithOneOf{}, nil, DefaultEncodingTags)
-			assert.NoError(t, err)
+			requireNoError(t, err)
 			errors, err := ValidateStructFields(DefaultRules, fields, tt.values, "json", "json")
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedErrors, errors)
+			requireNoError(t, err)
+			requireEqual(t, tt.expectedErrors, errors)
 		})
 	}
 }
@@ -106,17 +104,17 @@ func Test_Validate_StructFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fields, err := GetStructFields(tt.input, nil, DefaultEncodingTags)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, err, tt.wantErr)
+				requireErrorIs(t, err, tt.wantErr)
 				return
 			}
 			errors, err := ValidateStructFields(DefaultRules, fields, tt.values, "json", tt.tagPriority...)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, err, tt.wantErr)
+				requireErrorIs(t, err, tt.wantErr)
 				return
 			}
 
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedErrors, errors)
+			requireNoError(t, err)
+			requireEqual(t, tt.expectedErrors, errors)
 		})
 	}
 }

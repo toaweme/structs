@@ -32,6 +32,7 @@ func WithValidationTag(tag string) Option {
 	return func(s *Struct) { s.validationMessageTag = tag }
 }
 
+// DefaultTags is the default tag priority order for input lookup and validation.
 var DefaultTags = []string{"arg", "short", "json", "yaml"}
 
 // DefaultEncodingTags are the struct tags whose values follow the stdlib
@@ -41,6 +42,9 @@ var DefaultTags = []string{"arg", "short", "json", "yaml"}
 // verbatim. Override to change which tags are treated as encoding tags.
 var DefaultEncodingTags = []string{"json", "yaml", "toml", "xml"}
 
+// New binds a pointer to a struct and a rule set into a reusable *Struct.
+// structure must be a pointer to a struct. Options override the defaults:
+// no tag priority, DefaultEncodingTags, and the "rules" validation tag.
 func New(structure any, rules map[string]RuleFunc, opts ...Option) *Struct {
 	s := &Struct{
 		structure:            structure,
@@ -54,6 +58,9 @@ func New(structure any, rules map[string]RuleFunc, opts ...Option) *Struct {
 	return s
 }
 
+// Validate runs the configured rules over inputs and returns the validation
+// errors as a map of field name (resolved by tag priority, or the validation
+// tag when present) to messages. An empty map means everything passed.
 func (m *Struct) Validate(inputs map[string]any) (map[string][]string, error) {
 	structFields, err := GetStructFields(m.structure, nil, m.encodingTags)
 	if err != nil {
@@ -68,8 +75,9 @@ func (m *Struct) Validate(inputs map[string]any) (map[string][]string, error) {
 	return errors, nil
 }
 
+// Set populates the bound struct from inputs, resolving keys by tag priority
+// and applying `default:` tag values to fields left zero.
 func (m *Struct) Set(inputs map[string]any) error {
-	// log.Info("Set", "structure", m.structure)
 	err := SetStructFields(m.structure, Settings{
 		TagOrder:         m.tags,
 		AllowEnvOverride: false,

@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	// "github.com/davecgh/go-spew/spew"
 )
 
 func ToFloat(value any) (float64, error) {
@@ -100,7 +99,6 @@ func ToInt(value any) (int, error) {
 }
 
 func ToString(value any) (string, error) {
-	// spew.Dump("sintax.ToString", value)
 	switch value.(type) {
 	case string:
 		return value.(string), nil
@@ -126,7 +124,6 @@ func ToAnySlice(value any) ([]any, error) {
 		anySlice := make([]any, len(v))
 		for i, val := range v {
 			anySlice[i] = val
-			// spew.Dump("sintax.ToAnySlice", i, val)
 		}
 		return anySlice, nil
 	default:

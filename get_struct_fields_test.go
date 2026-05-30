@@ -2,8 +2,6 @@ package structs
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_GetStructFields(t *testing.T) {
@@ -130,29 +128,29 @@ func Test_GetStructFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := GetStructFields(tt.input, nil, DefaultEncodingTags)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, tt.wantErr, err)
+				requireErrorIs(t, err, tt.wantErr)
 				return
 			}
-			assert.NoError(t, err)
-			assert.Len(t, result, len(tt.expected))
+			requireNoError(t, err)
+			requireLen(t, result, len(tt.expected))
 			for i, res := range result {
 				expectedField := tt.expected[i]
-				assert.Equal(t, expectedField.Name, res.Name, "Name")
-				assert.Equal(t, expectedField.Type, res.Type, "Type")
-				assert.Equal(t, expectedField.Tags, res.Tags, "Tags")
-				assert.Equal(t, expectedField.Default, res.Default, "Default")
+				requireEqual(t, expectedField.Name, res.Name, "Name")
+				requireEqual(t, expectedField.Type, res.Type, "Type")
+				requireEqual(t, expectedField.Tags, res.Tags, "Tags")
+				requireEqual(t, expectedField.Default, res.Default, "Default")
 				for j, resField := range result[i].Fields {
 					expectedSubField := expectedField.Fields[j]
-					assert.Equal(t, expectedSubField.Name, resField.Name, "Sub.Name")
-					assert.Equal(t, expectedSubField.Tags, resField.Tags, "Sub.Tags")
-					assert.Equal(t, expectedSubField.Type, resField.Type, "Sub.Type")
-					assert.Equal(t, expectedSubField.Default, resField.Default, "Sub.Default")
+					requireEqual(t, expectedSubField.Name, resField.Name, "Sub.Name")
+					requireEqual(t, expectedSubField.Tags, resField.Tags, "Sub.Tags")
+					requireEqual(t, expectedSubField.Type, resField.Type, "Sub.Type")
+					requireEqual(t, expectedSubField.Default, resField.Default, "Sub.Default")
 					if expectedSubField.FQN != nil {
-						assert.NotNil(t, resField.FQN, "FQN")
-						assert.Equal(t, expectedSubField.FQN.Name, resField.FQN.Name, "FQN Name")
-						assert.Equal(t, expectedSubField.FQN.Tags, resField.FQN.Tags, "FQN Tags")
-						assert.Equal(t, expectedSubField.FQN.Type, resField.FQN.Type, "FQN Type")
-						assert.Equal(t, expectedSubField.FQN.Default, resField.FQN.Default, "FQN Default")
+						requireNotNil(t, resField.FQN, "FQN")
+						requireEqual(t, expectedSubField.FQN.Name, resField.FQN.Name, "FQN Name")
+						requireEqual(t, expectedSubField.FQN.Tags, resField.FQN.Tags, "FQN Tags")
+						requireEqual(t, expectedSubField.FQN.Type, resField.FQN.Type, "FQN Type")
+						requireEqual(t, expectedSubField.FQN.Default, resField.FQN.Default, "FQN Default")
 					}
 				}
 			}
@@ -162,10 +160,10 @@ func Test_GetStructFields(t *testing.T) {
 
 //
 // func assertField(t *testing.T, expectedField Field, result Field) {
-// 	assert.Equal(t, expectedField.Name, result.Name, "Name")
-// 	assert.Equal(t, expectedField.Type, result.Type, "Type")
-// 	assert.Equal(t, expectedField.Tags, result.Tags, "Tags")
-// 	assert.Equal(t, expectedField.Default, result.Default, "Default")
+// 	requireEqual(t, expectedField.Name, result.Name, "Name")
+// 	requireEqual(t, expectedField.Type, result.Type, "Type")
+// 	requireEqual(t, expectedField.Tags, result.Tags, "Tags")
+// 	requireEqual(t, expectedField.Default, result.Default, "Default")
 // 	if expectedField.FQN != nil {
 // 		assertField(t, *expectedField.FQN, *result.FQN)
 // 	}
@@ -214,7 +212,7 @@ func Test_parseTags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parseTags(tt.input, DefaultEncodingTags)
 
-			assert.Equal(t, tt.expected, result)
+			requireEqual(t, tt.expected, result)
 		})
 	}
 }
