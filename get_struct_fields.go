@@ -6,10 +6,12 @@ import (
 )
 
 // GetStructFields reflects over structure (a pointer to a struct) and returns
-// its fields as []Field, recursing into nested structs and building each nested
-// field's FQN. encodingTags selects which tags get their comma options stripped
-// (see DefaultEncodingTags). It returns ErrInputPointer or ErrInputPointerStruct
-// when structure is not a pointer to a struct.
+// its fields as []Field, recursing into named nested structs and building each
+// nested field's FQN. Embedded (anonymous) struct fields are promoted: their
+// fields are returned inline at this level, with no wrapper field and no FQN,
+// matching Go's own field promotion. encodingTags selects which tags get their
+// comma options stripped (see DefaultEncodingTags). It returns ErrInputPointer
+// or ErrInputPointerStruct when structure is not a pointer to a struct.
 func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Field, error) {
 	val := reflect.ValueOf(structure)
 	if val.Kind() != reflect.Ptr {
@@ -29,6 +31,22 @@ func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Fie
 		fieldValue := val.Field(i)
 
 		tags := parseTags(string(field.Tag), encodingTags)
+
+		// an untagged embedded (anonymous) struct promotes its fields to this
+		// level, just as Go's own field promotion does: the fields appear inline,
+		// with no wrapper field and no FQN prefix. a tagged embed (or any named
+		// struct field) instead groups its fields under a dotted FQN, matching
+		// encoding/json: a tag on an anonymous field names it rather than
+		// promoting it.
+		if field.Anonymous && field.Type.Kind() == reflect.Struct && len(tags) == 0 {
+			promoted, err := GetStructFields(val.Field(i).Addr().Interface(), parent, encodingTags)
+			if err != nil {
+				return nil, err
+			}
+			fields = append(fields, promoted...)
+			continue
+		}
+
 		f := NewField(field.Name, field.Type.Kind(), fieldValue, tags, parent)
 
 		if field.Type.Kind() == reflect.Struct {

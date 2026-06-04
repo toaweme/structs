@@ -172,6 +172,77 @@ func Test_GetStructFields(t *testing.T) {
 // 	}
 // }
 
+type EmbeddedFields struct {
+	Alpha string `json:"alpha" tag1:"a"`
+	Beta  string `json:"beta" tag1:"b"`
+}
+
+type embeddingStruct struct {
+	EmbeddedFields
+	Gamma bool `json:"gamma" tag1:"g"`
+}
+
+// embedded (anonymous) struct fields are promoted to the parent level: they
+// appear inline as plain top-level fields, not nested under a wrapper.
+func Test_GetStructFields_EmbeddedPromotion(t *testing.T) {
+	fields, err := GetStructFields(&embeddingStruct{}, nil, DefaultEncodingTags)
+	requireNoError(t, err)
+
+	requireLen(t, fields, 3)
+
+	expected := []Field{
+		{Name: "Alpha", Type: "string", Tags: map[string]string{"json": "alpha", "tag1": "a"}},
+		{Name: "Beta", Type: "string", Tags: map[string]string{"json": "beta", "tag1": "b"}},
+		{Name: "Gamma", Type: "bool", Tags: map[string]string{"json": "gamma", "tag1": "g"}},
+	}
+	for i, exp := range expected {
+		requireEqual(t, exp.Name, fields[i].Name, "Name")
+		requireEqual(t, exp.Type, fields[i].Type, "Type")
+		requireEqual(t, exp.Tags, fields[i].Tags, "Tags")
+		if fields[i].FQN != nil {
+			t.Fatalf("promoted field %q should have no FQN, got %+v", fields[i].Name, fields[i].FQN)
+		}
+		if len(fields[i].Fields) != 0 {
+			t.Fatalf("promoted field %q should have no nested Fields", fields[i].Name)
+		}
+	}
+}
+
+// a promoted embedded field is set by its own plain tag, with no FQN prefix.
+func Test_SetStructFields_EmbeddedPromotion(t *testing.T) {
+	s := &embeddingStruct{}
+	settings := Settings{TagOrder: []string{"json", "tag1"}, EncodingTags: DefaultEncodingTags}
+	err := SetStructFields(s, settings, map[string]any{"alpha": "x", "beta": "y", "gamma": true})
+	requireNoError(t, err)
+
+	requireEqual(t, "x", s.Alpha, "Alpha")
+	requireEqual(t, "y", s.Beta, "Beta")
+	requireEqual(t, true, s.Gamma, "Gamma")
+}
+
+type taggedEmbedStruct struct {
+	EmbeddedFields `json:"nested"`
+	Gamma          bool `json:"gamma"`
+}
+
+// a tag on an anonymous field names it (encoding/json semantics): its fields
+// group under a dotted FQN instead of being promoted to the top level.
+func Test_GetStructFields_TaggedEmbedGroups(t *testing.T) {
+	fields, err := GetStructFields(&taggedEmbedStruct{}, nil, DefaultEncodingTags)
+	requireNoError(t, err)
+
+	// the embed stays a single grouped field, not two promoted ones.
+	requireLen(t, fields, 2)
+	requireEqual(t, "EmbeddedFields", fields[0].Name, "Name")
+	requireEqual(t, map[string]string{"json": "nested"}, fields[0].Tags, "Tags")
+	requireLen(t, fields[0].Fields, 2)
+
+	alpha := fields[0].Fields[0]
+	requireNotNil(t, alpha.FQN, "FQN")
+	requireEqual(t, "EmbeddedFields.Alpha", alpha.FQN.Name, "FQN Name")
+	requireEqual(t, "nested.alpha", alpha.FQN.Tags["json"], "FQN json tag")
+}
+
 func Test_parseTags(t *testing.T) {
 	tests := []struct {
 		name     string
