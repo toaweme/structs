@@ -18,19 +18,18 @@ var ErrInputPointerStruct = errors.New("structure should be a pointer to a struc
 
 // Settings controls how SetStructFields resolves inputs onto struct fields.
 type Settings struct {
-	// TagOrder is the tag priority used to match input keys to fields; the first
-	// tag in the list that a field carries wins.
+	// TagOrder is the tag priority used to match input keys to fields
+	// the first tag in the list that a field carries wins.
 	TagOrder []string
 	// AllowEnvOverride toggles whether env vars can be overridden by tag inputs
 	// env var handling takes priority over tag handling and is enabled by having a tag `env:"ENV_VAR"`
 	// this toggles whether `env:"ENV_VAR"` can be overridden by `anything:"env_var"`
 	AllowEnvOverride bool
-
-	// AllowTagOverride toggles whether tag inputs can be overridden by other tags or exact FieldName matches
-	// if true, only the first tag that matches will be used and if nothing is matched
-	// we'll look for the field name as the structure key
+	// AllowTagOverride toggles whether a later matching tag in TagOrder can
+	// override a value already set by an earlier one.
+	// if false, the first tag in TagOrder that matches wins and matching stops there.
+	// if true, every matching tag is applied in order, so the last match wins.
 	AllowTagOverride bool
-
 	// EncodingTags are the tags whose values use comma-separated options (see
 	// DefaultEncodingTags). Empty disables comma stripping.
 	EncodingTags []string

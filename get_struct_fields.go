@@ -7,11 +7,11 @@ import (
 
 // GetStructFields reflects over structure (a pointer to a struct) and returns
 // its fields as []Field, recursing into named nested structs and building each
-// nested field's FQN. Embedded (anonymous) struct fields are promoted: their
-// fields are returned inline at this level, with no wrapper field and no FQN,
-// matching Go's own field promotion. encodingTags selects which tags get their
-// comma options stripped (see DefaultEncodingTags). It returns ErrInputPointer
-// or ErrInputPointerStruct when structure is not a pointer to a struct.
+// nested field's FQN (field.subfield.subsubfield).
+// Embedded (anonymous) struct fields are promoted:
+// their fields are returned inline at this level, with no wrapper field and no FQN, matching Go's own field promotion.
+// encodingTags selects which tags get their comma options stripped (see DefaultEncodingTags).
+// It returns ErrInputPointer or ErrInputPointerStruct when structure is not a pointer to a struct.
 func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Field, error) {
 	val := reflect.ValueOf(structure)
 	if val.Kind() != reflect.Ptr {
@@ -67,7 +67,7 @@ func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Fie
 	return fields, nil
 }
 
-// parseTags extracts inputs and their inputs from a given line of text
+// parseTags extracts tags and their values from a given line of text
 // arg:"cwd" short:"c" help:"Current working directory"
 // The function returns a map: {"arg": "cwd", "short": "c", "help": "Current working directory"}
 func parseTags(line string, encodingTags []string) map[string]string {
@@ -117,7 +117,7 @@ func parseTags(line string, encodingTags []string) map[string]string {
 			lastTagValue = ""
 			inTag = true
 		default:
-			// Collect characters for the tag name or value
+			// collect characters for the tag name or value
 			if inTag {
 				lastTagName += string(char)
 			}

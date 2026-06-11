@@ -8,10 +8,6 @@ import (
 	"testing"
 )
 
-// assert/require helpers local to the test suite, written to keep the package
-// free of a third-party test framework. require* helpers stop the test on
-// failure (t.Fatalf); assert* helpers report and continue (t.Errorf).
-
 func label(msg []any) string {
 	if len(msg) == 0 {
 		return ""

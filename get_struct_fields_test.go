@@ -5,7 +5,6 @@ import (
 )
 
 func Test_GetStructFields(t *testing.T) {
-	// set pointerInt to 123
 	pointerInt := new(int)
 	*pointerInt = 123
 
@@ -224,8 +223,8 @@ type taggedEmbedStruct struct {
 	Gamma          bool `json:"gamma"`
 }
 
-// a tag on an anonymous field names it (encoding/json semantics): its fields
-// group under a dotted FQN instead of being promoted to the top level.
+// a tag on an anonymous field names it (encoding/json semantics)
+// its fields group under a dotted FQN instead of being promoted to the top level.
 func Test_GetStructFields_TaggedEmbedGroups(t *testing.T) {
 	fields, err := GetStructFields(&taggedEmbedStruct{}, nil, DefaultEncodingTags)
 	requireNoError(t, err)
