@@ -7,10 +7,10 @@ import "testing"
 // only indirectly.
 
 func Test_New_Options(t *testing.T) {
-	s := New(&struct{}{}, DefaultRules,
+	s := New(&struct{}{},
 		WithTags("arg", "json"),
 		WithEncodingTags("json"),
-		WithValidationTag("validate"),
+		WithValidationMessageTag("validate"),
 	)
 
 	requireEqual(t, []string{"arg", "json"}, s.tags)
@@ -19,7 +19,7 @@ func Test_New_Options(t *testing.T) {
 }
 
 func Test_New_Defaults(t *testing.T) {
-	s := New(&struct{}{}, DefaultRules)
+	s := New(&struct{}{})
 
 	// no WithTags -> tag priority left unset
 	if s.tags != nil {
@@ -35,7 +35,7 @@ func Test_Struct_Validate(t *testing.T) {
 		Mode   string `json:"mode" rules:"required"`
 	}
 
-	s := New(&target{}, DefaultRules, WithTags("json"))
+	s := New(&target{}, WithTags("json"))
 
 	t.Run("valid inputs report no errors", func(t *testing.T) {
 		errs, err := s.Validate(map[string]any{"format": "json", "mode": "fast"})
@@ -53,7 +53,7 @@ func Test_Struct_Validate(t *testing.T) {
 	})
 
 	t.Run("non-pointer structure errors", func(t *testing.T) {
-		bad := New(target{}, DefaultRules, WithTags("json"))
+		bad := New(target{}, WithTags("json"))
 		_, err := bad.Validate(map[string]any{})
 		requireErrorIs(t, err, ErrInputPointer)
 	})
@@ -66,7 +66,7 @@ func Test_Struct_Set(t *testing.T) {
 			Port int    `json:"port" default:"8080"`
 		}
 		got := &target{}
-		s := New(got, DefaultRules, WithTags("json"))
+		s := New(got, WithTags("json"))
 
 		err := s.Set(map[string]any{"name": "svc"})
 		requireNoError(t, err)
@@ -75,7 +75,7 @@ func Test_Struct_Set(t *testing.T) {
 	})
 
 	t.Run("non-pointer structure errors", func(t *testing.T) {
-		s := New(struct{}{}, DefaultRules, WithTags("json"))
+		s := New(struct{}{}, WithTags("json"))
 		err := s.Set(map[string]any{})
 		requireErrorIs(t, err, ErrInputPointer)
 	})

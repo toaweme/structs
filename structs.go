@@ -13,7 +13,7 @@ type Struct struct {
 	encodingTags         []string
 }
 
-// Option configures a Struct. See WithTags, WithEncodingTags, WithValidationTag.
+// Option configures a Struct. See WithTags, WithEncodingTags, WithRules, WithValidationMessageTag.
 type Option func(*Struct)
 
 // WithTags sets the tag priority order used for input lookup and validation.
@@ -27,8 +27,17 @@ func WithEncodingTags(tags ...string) Option {
 	return func(s *Struct) { s.encodingTags = tags }
 }
 
-// WithValidationTag sets the struct tag used to source validation rules.
-func WithValidationTag(tag string) Option {
+// WithRules sets the rule set used by Validate, keyed by the name used in a
+// `rules:` tag. Defaults to DefaultRules; pass your own map to extend or replace it.
+func WithRules(rules map[string]RuleFunc) Option {
+	return func(s *Struct) { s.ruleFuncs = rules }
+}
+
+// WithValidationMessageTag sets the struct tag whose value is used as the field
+// key in the map returned by Validate. When a field carries this tag, its value
+// replaces the tag-priority-resolved name in the validation messages, letting you
+// report errors under a stable, caller-facing name. Defaults to "rules".
+func WithValidationMessageTag(tag string) Option {
 	return func(s *Struct) { s.validationMessageTag = tag }
 }
 
@@ -42,14 +51,14 @@ var DefaultTags = []string{"arg", "short", "json", "yaml"}
 // verbatim. Override to change which tags are treated as encoding tags.
 var DefaultEncodingTags = []string{"json", "yaml", "toml", "xml"}
 
-// New binds a pointer to a struct and a rule set into a reusable *Struct.
-// structure must be a pointer to a struct. Options override the defaults:
-// no tag priority, DefaultEncodingTags, and the "rules" validation tag.
-func New(structure any, rules map[string]RuleFunc, opts ...Option) *Struct {
+// New binds a pointer to a struct into a reusable *Struct. structure must be a
+// pointer to a struct. Options override the defaults: no tag priority,
+// DefaultRules, DefaultEncodingTags, and the "rules" validation message tag.
+func New(structure any, opts ...Option) *Struct {
 	s := &Struct{
 		structure:            structure,
 		validationMessageTag: validationTag,
-		ruleFuncs:            rules,
+		ruleFuncs:            DefaultRules,
 		encodingTags:         DefaultEncodingTags,
 	}
 	for _, opt := range opts {
