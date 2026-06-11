@@ -27,6 +27,7 @@ var Required RuleFunc = func(fieldName string, values map[string]any, defaultVal
 	value, ok := values[fieldName]
 	if !ok && defaultValue == "" {
 		if fieldValue.IsValid() && !fieldValue.IsZero() {
+			//nolint:nilnil // nil, nil means no validation and internal errors
 			return nil, nil
 		}
 		errors := map[string][]string{
@@ -48,6 +49,7 @@ var Required RuleFunc = func(fieldName string, values map[string]any, defaultVal
 		}
 	}
 
+	//nolint:nilnil // nil, nil means no validation and internal errors
 	return nil, nil
 }
 
@@ -68,16 +70,18 @@ var OneOf RuleFunc = func(fieldName string, values map[string]any, defaultValue 
 		value = defaultValue
 	}
 	if value == "" {
+		//nolint:nilnil // nil, nil means no validation and internal errors
 		return nil, nil
 	}
 
 	for _, allowed := range args {
 		if value == allowed {
+			//nolint:nilnil // nil, nil means no validation and internal errors
 			return nil, nil
 		}
 	}
 
 	return map[string][]string{
-		fieldName: {fmt.Sprintf("must be one of: %s", strings.Join(args, ", "))},
+		fieldName: {"must be one of: " + strings.Join(args, ", ")},
 	}, nil
 }

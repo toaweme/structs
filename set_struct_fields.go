@@ -215,11 +215,11 @@ func findNestedValue(inputs map[string]any, path []string) (bool, any) {
 		}
 
 		// can only descend into a nested map[string]any
-		if nestedMap, ok := value.(map[string]any); ok {
-			current = nestedMap
-		} else {
+		nestedMap, ok := value.(map[string]any)
+		if !ok {
 			return false, nil
 		}
+		current = nestedMap
 	}
 
 	// the final key holds the value
@@ -342,7 +342,7 @@ func setSliceValue(value any, fieldValue reflect.Value) error {
 			if valReflect.Kind() == reflect.Map {
 				newStruct := reflect.New(elemType).Elem()
 
-				for j := 0; j < elemType.NumField(); j++ {
+				for j := range elemType.NumField() {
 					field := elemType.Field(j)
 					structFieldValue := newStruct.Field(j)
 
@@ -388,11 +388,10 @@ func setSliceValue(value any, fieldValue reflect.Value) error {
 
 		elemVal := reflect.ValueOf(val)
 		if !elemVal.Type().AssignableTo(elemType) {
-			if elemVal.Type().ConvertibleTo(elemType) {
-				elemVal = elemVal.Convert(elemType)
-			} else {
+			if !elemVal.Type().ConvertibleTo(elemType) {
 				return fmt.Errorf("cannot assign or convert %T to %s", val, elemType)
 			}
+			elemVal = elemVal.Convert(elemType)
 		}
 
 		newSlice.Index(i).Set(elemVal)

@@ -5,14 +5,13 @@ import (
 )
 
 func Test_GetStructFields(t *testing.T) {
-	var pointerInt *int
 	// set pointerInt to 123
-	pointerInt = new(int)
+	pointerInt := new(int)
 	*pointerInt = 123
 
 	tests := []struct {
 		name     string
-		input    interface{}
+		input    any
 		expected []Field
 		wantErr  error
 	}{

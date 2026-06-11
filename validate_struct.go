@@ -62,6 +62,7 @@ func validateRule(funcs map[string]RuleFunc, rule Rule, structFieldName string, 
 	}
 
 	if len(errors) == 0 {
+		//nolint:nilnil // no validation errors and no internal failure is a valid result
 		return nil, nil
 	}
 

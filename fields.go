@@ -25,7 +25,6 @@ func parseRules(rules []string) []Rule {
 		parsedRules = append(parsedRules, r)
 	}
 	return parsedRules
-
 }
 
 const defaultValueTag = "default"
@@ -106,7 +105,6 @@ func (f Field) buildFQN() *Field {
 			} else {
 				newField.Tags[tag] = value + "." + newField.Tags[tag]
 			}
-
 		}
 		parent = parent.Parent
 	}

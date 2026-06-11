@@ -26,7 +26,7 @@ func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Fie
 	val = val.Elem()
 	typ := val.Type()
 
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		field := typ.Field(i)
 		fieldValue := val.Field(i)
 
@@ -81,15 +81,15 @@ func parseTags(line string, encodingTags []string) map[string]string {
 	lastTagValue := ""
 
 	for i, char := range line {
-		switch {
-		case char == ':':
+		switch char {
+		case ':':
 			if inValue {
 				lastTagValue += string(char)
 				continue
 			}
 			inTag = false
 			continue
-		case char == '"':
+		case '"':
 			// allow escaping quotes
 			if i > 0 && line[i-1] == '\\' {
 				lastTagValue = lastTagValue[:len(lastTagValue)-1] + string(char)
@@ -99,25 +99,23 @@ func parseTags(line string, encodingTags []string) map[string]string {
 			inValue = !inValue
 			if inValue {
 				continue
-			} else {
-				// exiting a tag value
-				lastTagName = strings.TrimSpace(lastTagName)
-				lastTagValue = strings.TrimSpace(lastTagValue)
-				// comma-suffixed options (",omitempty", ",flow", ...) are a
-				// convention of encoding tags only. strip them for those tags so
-				// the stored value is just the name (e.g. "filters" not
-				// "filters,omitempty"); freeform tags (help, default, rules, ...)
-				// keep their value verbatim.
-				if isEncodingTag(lastTagName, encodingTags) {
-					if idx := strings.IndexByte(lastTagValue, ','); idx >= 0 {
-						lastTagValue = lastTagValue[:idx]
-					}
-				}
-				result[lastTagName] = lastTagValue
-				lastTagName = ""
-				lastTagValue = ""
-				inTag = true
 			}
+			// exiting a tag value
+			lastTagName = strings.TrimSpace(lastTagName)
+			lastTagValue = strings.TrimSpace(lastTagValue)
+			// comma-suffixed options (",omitempty", ",flow", ...) are a
+			// convention of encoding tags only. strip them for those tags so
+			// the stored value is just the name (e.g. "filters" not "filters,omitempty").
+			// Freeform tags (help, default, rules) keep their value verbatim.
+			if isEncodingTag(lastTagName, encodingTags) {
+				if idx := strings.IndexByte(lastTagValue, ','); idx >= 0 {
+					lastTagValue = lastTagValue[:idx]
+				}
+			}
+			result[lastTagName] = lastTagValue
+			lastTagName = ""
+			lastTagValue = ""
+			inTag = true
 		default:
 			// Collect characters for the tag name or value
 			if inTag {

@@ -84,6 +84,8 @@ func requireNotNil(t *testing.T, obj any, msg ...any) {
 		if v.IsNil() {
 			t.Fatalf("expected non-nil value%s", label(msg))
 		}
+	default:
+		// other kinds can't be nil
 	}
 }
 

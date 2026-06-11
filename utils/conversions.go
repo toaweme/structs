@@ -1,3 +1,5 @@
+// Package utils provides type-coercion helpers used to convert loosely-typed
+// input values (from tags, env vars, decoded config) into concrete field types.
 package utils
 
 import (
@@ -7,6 +9,8 @@ import (
 	"strings"
 )
 
+// ToFloat converts a numeric or numeric-string value to a float64.
+// It returns an error for unsupported types or unparseable strings.
 func ToFloat(value any) (float64, error) {
 	switch v := value.(type) {
 	case float64:
@@ -44,6 +48,9 @@ func ToFloat(value any) (float64, error) {
 	}
 }
 
+// ParseBool reports whether val is a truthy string
+// ("true", "yes", "1", case-insensitive)
+// everything else, including unrecognized input, is false.
 func ParseBool(val string) bool {
 	switch strings.ToLower(val) {
 	case "true", "yes", "1":
@@ -55,6 +62,8 @@ func ParseBool(val string) bool {
 	}
 }
 
+// ToInt converts a numeric or numeric-string value to an int.
+// Floats with a fractional part and unparseable strings return an error.
 func ToInt(value any) (int, error) {
 	switch v := value.(type) {
 	case int:
@@ -98,12 +107,13 @@ func ToInt(value any) (int, error) {
 	}
 }
 
+// ToString converts a string, int, or float value to its string form
 func ToString(value any) (string, error) {
-	switch value.(type) {
+	switch v := value.(type) {
 	case string:
-		return value.(string), nil
+		return v, nil
 	case int:
-		return strconv.Itoa(value.(int)), nil
+		return strconv.Itoa(v), nil
 	case float32, float64:
 		return fmt.Sprintf("%f", value), nil
 	default:
@@ -111,10 +121,15 @@ func ToString(value any) (string, error) {
 	}
 }
 
+// ToAnySlice converts a slice value to []any.
+// []any and []string are handled directly
+// a non-empty string becomes a single-element slice
+// any other slice is converted element-wise via reflection.
+// Non-slice types return an error.
 func ToAnySlice(value any) ([]any, error) {
 	switch v := value.(type) {
 	case []any:
-		return value.([]any), nil
+		return v, nil
 	case string:
 		if v == "" {
 			return []any{}, nil
@@ -133,7 +148,7 @@ func ToAnySlice(value any) ([]any, error) {
 		}
 
 		anySlice := make([]any, val.Len())
-		for i := 0; i < val.Len(); i++ {
+		for i := range val.Len() {
 			anySlice[i] = val.Index(i).Interface()
 		}
 

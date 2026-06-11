@@ -88,7 +88,7 @@ func Test_SetStructFields(t *testing.T) {
 			},
 			expected: &struct {
 				Field1 string `name:"field_1" tag1:"field_1" tag2:"field_1"`
-				Field2 int    `name:"field_2" tag2:"field_2" tag2:"field_2"`
+				Field2 int    `name:"field_2" tag1:"field_2" tag2:"field_2"`
 			}{
 				Field1: "value10000",
 				Field2: 100000,
@@ -556,7 +556,7 @@ func Test_SetStructFieldsWithStructSlice(t *testing.T) {
 		{
 			name: "slice of interfaces with mixed types",
 			structure: &struct {
-				Mixed []interface{}
+				Mixed []any
 			}{},
 			settings: Settings{
 				AllowTagOverride: true,
@@ -565,8 +565,8 @@ func Test_SetStructFieldsWithStructSlice(t *testing.T) {
 				"Mixed": []any{"string", 123, 45.67, true, nil},
 			},
 			expected: &struct {
-				Mixed []interface{}
-			}{Mixed: []interface{}{"string", 123, 45.67, true, nil}},
+				Mixed []any
+			}{Mixed: []any{"string", 123, 45.67, true, nil}},
 		},
 		{
 			name: "complex nested structure with multiple slice levels",
@@ -715,6 +715,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": "a, b ,c"},
 			assert: func(t *testing.T, target any) {
+				t.Helper()
 				requireEqual(t, []string{"a", "b", "c"}, target.(*withDefaultSep).Tags)
 			},
 		},
@@ -723,6 +724,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": "solo"},
 			assert: func(t *testing.T, target any) {
+				t.Helper()
 				requireEqual(t, []string{"solo"}, target.(*withDefaultSep).Tags)
 			},
 		},
@@ -731,6 +733,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": ""},
 			assert: func(t *testing.T, target any) {
+				t.Helper()
 				requireEqual(t, []string{}, target.(*withDefaultSep).Tags)
 			},
 		},
@@ -739,6 +742,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withCustomSep{},
 			inputs: map[string]any{"tags": "a|b|c"},
 			assert: func(t *testing.T, target any) {
+				t.Helper()
 				requireEqual(t, []string{"a", "b", "c"}, target.(*withCustomSep).Tags)
 			},
 		},
@@ -747,6 +751,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withDefaultSep{},
 			inputs: map[string]any{"tags": []string{"x,y", "z"}},
 			assert: func(t *testing.T, target any) {
+				t.Helper()
 				requireEqual(t, []string{"x,y", "z"}, target.(*withDefaultSep).Tags)
 			},
 		},
@@ -755,6 +760,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			target: &withInts{},
 			inputs: map[string]any{"ports": "8080,9090"},
 			assert: func(t *testing.T, target any) {
+				t.Helper()
 				requireEqual(t, []int{8080, 9090}, target.(*withInts).Ports)
 			},
 		},
