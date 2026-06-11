@@ -1,5 +1,3 @@
 module github.com/toaweme/structs
 
-go 1.23
-
-toolchain go1.24.7
+go 1.22
