@@ -5,24 +5,19 @@
 [![GitHub Tag](https://img.shields.io/github/v/tag/toaweme/structs?label=Tag&color=green)](https://github.com/toaweme/structs/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue)](/LICENSE)
 
-## Use Go's structs to innovate
+## Fill and read Go's structs
 
-`github.com/toaweme/structs` gives you the tools to work with Go's structs, its fields, tags and values.
+`github.com/toaweme/structs` gives you runtime tools to work with Go's structs, its fields, tags and values.
 
 This module was originally built as a fun way to solve the CLI app arg parsing problem.
 I'm a big fan of simplicity and the stdlib while powerful, doesn't make CLI flag/arg parsing simple, there's a lot of boilerplate.
 `structs` abstracts the complicated bits and can magically set struct field values (however nested) from a simple `map[string]any`.
 
-## Module
+## Install
 
-- `structs.New` a small abstraction to Validate and Set.
-  - `structs.WithTags` a priority list of tags for `Set` (default: `["json", "yaml"]`).
-  - `structs.WithEncodingTags` a list of tags in which commas are treated as encoding configuration (e.g. `json:"field,omitempty"`).
-  - `structs.WithRules` extend or replace the built-in validation rules.
-  - `structs.WithValidationTag` tag used to define the validation rules (default: `rules`)
-- `structs.GetStructFields` reads the entire nested struct field tree.
-- `structs.SetStructFields` takes a `map[string]any` and fills the struct fields.
-- `structs.ValidateStructFields` uses a rule map to validate your `map[string]any` against selected fields.
+```sh
+go get github.com/toaweme/structs
+```
 
 ## Overview
 
@@ -106,11 +101,16 @@ like `encoding/json`, so it behaves like the named nesting above.
   leaf stays unset. Use the dotted path or a `map[string]any` sub-section.
 
 
-## Install
+## Module
 
-```sh
-go get github.com/toaweme/structs
-```
+- `structs.New` a small abstraction to Validate and Set.
+    - `structs.WithTags` a priority list of tags for `Set` (default: `["json", "yaml"]`).
+    - `structs.WithEncodingTags` a list of tags in which commas are treated as encoding configuration (e.g. `json:"field,omitempty"`).
+    - `structs.WithRules` extend or replace the built-in validation rules.
+    - `structs.WithValidationTag` tag used to define the validation rules (default: `rules`)
+- `structs.GetStructFields` reads the entire nested struct field tree.
+- `structs.SetStructFields` takes a `map[string]any` and fills the struct fields.
+- `structs.ValidateStructFields` uses a rule map to validate your `map[string]any` against selected fields.
 
 ## Features
 
