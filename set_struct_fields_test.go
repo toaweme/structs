@@ -775,6 +775,186 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 	}
 }
 
+// nestDatabase and nestServer mirror the README's nested-struct example: a
+// named struct field reached by dotted path, nested map, or glued env tag.
+type nestDatabase struct {
+	URL string `json:"url" env:"URL"`
+}
+
+type nestServer struct {
+	Database nestDatabase `json:"database" env:"DATABASE"`
+}
+
+func Test_Setting_Nested_Struct(t *testing.T) {
+	tests := []struct {
+		name     string
+		inputs   map[string]any
+		settings Settings
+		expected *nestServer
+	}{
+		{
+			name:     "by fully qualified dotted tag",
+			inputs:   map[string]any{"database.url": "mysql://127.0.0.1:3306/beep"},
+			settings: Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags},
+			expected: &nestServer{Database: nestDatabase{URL: "mysql://127.0.0.1:3306/beep"}},
+		},
+		{
+			name:     "by glued env tag",
+			inputs:   map[string]any{"DATABASE_URL": "mysql://127.0.0.1:3306/beep"},
+			settings: Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags},
+			expected: &nestServer{Database: nestDatabase{URL: "mysql://127.0.0.1:3306/beep"}},
+		},
+		{
+			name: "by nested map[string]any",
+			inputs: map[string]any{
+				"database": map[string]any{
+					"url": "mysql://127.0.0.1:3306/beep",
+				},
+			},
+			settings: Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags},
+			expected: &nestServer{Database: nestDatabase{URL: "mysql://127.0.0.1:3306/beep"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := &nestServer{}
+			err := SetStructFields(got, tt.settings, tt.inputs)
+			requireNoError(t, err)
+			requireEqual(t, tt.expected, got)
+		})
+	}
+}
+
+// Test_Setting_Nested_Struct_NestedMap pins down the question that's easy to
+// forget: nested struct fields can be set by feeding a nested map, not only by
+// the flat "database.url" dotted key. It also documents the boundary - the
+// descent is driven by findNestedValue, which asserts each level is exactly
+// map[string]any, so a value whose concrete type is map[string]map[string]any
+// is descended into one level (its element type is map[string]any) but not as a
+// deeper intermediate.
+func Test_Setting_Nested_Struct_NestedMap(t *testing.T) {
+	settings := Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}
+
+	t.Run("nested map sets the field, same as the dotted key", func(t *testing.T) {
+		viaMap := &nestServer{}
+		err := SetStructFields(viaMap, settings, map[string]any{
+			"database": map[string]any{"url": "from-nested-map"},
+		})
+		requireNoError(t, err)
+
+		viaDotted := &nestServer{}
+		err = SetStructFields(viaDotted, settings, map[string]any{
+			"database.url": "from-nested-map",
+		})
+		requireNoError(t, err)
+
+		requireEqual(t, viaDotted, viaMap)
+		requireEqual(t, "from-nested-map", viaMap.Database.URL)
+	})
+
+	t.Run("map[string]map[string]any descends one level", func(t *testing.T) {
+		// the value at "database" is map[string]any (the element type of the
+		// outer map[string]map[string]any), so the URL field is reached.
+		got := &nestServer{}
+		err := SetStructFields(got, settings, map[string]any{
+			"database": map[string]map[string]any{
+				"": {"url": "ignored"},
+			}[""],
+		})
+		requireNoError(t, err)
+		// element above is map[string]any{"url": "ignored"}, which sets URL
+		requireEqual(t, "ignored", got.Database.URL)
+	})
+
+	t.Run("map[string]map[string]any as a deeper intermediate does not descend", func(t *testing.T) {
+		// a three-level struct fed a concretely typed map[string]map[string]any
+		// intermediate: findNestedValue can't assert it to map[string]any, so
+		// the leaf stays empty. all-map[string]any nesting is the supported form.
+		type conn struct {
+			URL string `json:"url"`
+		}
+		type db struct {
+			Conn conn `json:"conn"`
+		}
+		type srv struct {
+			Database db `json:"database"`
+		}
+
+		typed := &srv{}
+		err := SetStructFields(typed, settings, map[string]any{
+			"database": map[string]map[string]any{"conn": {"url": "deep"}},
+		})
+		requireNoError(t, err)
+		requireEqual(t, "", typed.Database.Conn.URL)
+
+		// the same shape with map[string]any at every level does descend.
+		plain := &srv{}
+		err = SetStructFields(plain, settings, map[string]any{
+			"database": map[string]any{"conn": map[string]any{"url": "deep"}},
+		})
+		requireNoError(t, err)
+		requireEqual(t, "deep", plain.Database.Conn.URL)
+	})
+}
+
+// EmbedNetwork is embedded anonymously into embedServer below so its fields are
+// promoted to the parent level, the way Go (and encoding/json) promote them.
+// The type must be exported: promotion reflects into the field via
+// Addr().Interface(), which panics on an unexported embedded field.
+type EmbedNetwork struct {
+	Host string `json:"host" env:"HOST"`
+	Port int    `json:"port" env:"PORT"`
+}
+
+type embedServer struct {
+	EmbedNetwork
+	Name string `json:"name"`
+}
+
+func Test_Setting_Embed_Struct(t *testing.T) {
+	tests := []struct {
+		name     string
+		inputs   map[string]any
+		settings Settings
+		expected *embedServer
+	}{
+		{
+			name: "promoted fields set by their own tag, no prefix",
+			inputs: map[string]any{
+				"host": "127.0.0.1",
+				"port": 8080,
+				"name": "edge",
+			},
+			settings: Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags},
+			expected: &embedServer{
+				EmbedNetwork: EmbedNetwork{Host: "127.0.0.1", Port: 8080},
+				Name:         "edge",
+			},
+		},
+		{
+			name: "promoted fields set by their own env tag, no prefix",
+			inputs: map[string]any{
+				"HOST": "0.0.0.0",
+				"PORT": 9090,
+			},
+			settings: Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags},
+			expected: &embedServer{
+				EmbedNetwork: EmbedNetwork{Host: "0.0.0.0", Port: 9090},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := &embedServer{}
+			err := SetStructFields(got, tt.settings, tt.inputs)
+			requireNoError(t, err)
+			requireEqual(t, tt.expected, got)
+		})
+	}
+}
+
 func Test_ParseTags_StripsOmitempty(t *testing.T) {
 	tags := parseTags(`json:"filters,omitempty" yaml:"filters,omitempty,flow" rules:"required"`, DefaultEncodingTags)
 	requireEqual(t, "filters", tags["json"])

@@ -16,49 +16,46 @@ I'm a big fan of simplicity and the stdlib while powerful, doesn't make CLI flag
 ## Module
 
 - `structs.New` a small abstraction to Validate and Set.
+  - `structs.WithTags` a priority list of tags for `Set` (default: `["json", "yaml"]`).
+  - `structs.WithEncodingTags` a list of tags in which commas are treated as encoding configuration (e.g. `json:"field,omitempty"`).
+  - `structs.WithRules` extend or replace the built-in validation rules.
+  - `structs.WithValidationTag` tag used to define the validation rules (default: `rules`)
 - `structs.GetStructFields` reads the entire nested struct field tree.
 - `structs.SetStructFields` takes a `map[string]any` and fills the struct fields.
 - `structs.ValidateStructFields` uses a rule map to validate your `map[string]any` against selected fields.
-  - `structs.WithTags` a priority list of tags for `Set` (default `["json", "yaml"]`).
-  - `structs.WithEncodingTags` 
-  - `structs.WithRules` extend or replace the built-in validation rules.
-  - `structs.WithValidationTag` tag whose value names the field in the returned validation errors.
 
 ## Quickstart
 
-The library has two layers.
+### Nested structs
 
-**The `structs.New` abstraction** wraps a struct pointer and gives you `Validate` and
-`Set`. This is what you want most of the time:
+Define your structs:
 
 ```go
-cfg := &ServerConfig{}
-m := structs.New(cfg)
+type Server struct {
+	Database Database `json:"database" env:"DATABASE"`
+}
 
-errs, err := m.Validate(inputs) // err is a real failure; errs is map[field][]messages
-if err := m.Set(inputs); err != nil { /* ... */ }
+type Database struct {
+	URL string `json:"url" env:"URL"`
+}
 ```
 
-Pass options to `New` to tune behavior:
+Then use a map to set the fields:
 
-- `structs.WithTags(...)` controls the order tags are matched when binding `inputs`
-  to fields. The first tag a field carries wins.
-- `structs.WithEncodingTags(...)` controls which tags are used when reading values
-  back out of the struct.
-- `structs.WithRules(map[string]RuleFunc{...})` adds or overrides validation rules
-  referenced from a field's `rules:` tag (on top of the built-in `required` and `oneof`).
-- `structs.WithValidationTag("validate")` points at a struct tag whose value is used
-  as the field key in the returned validation errors, instead of the tag-resolved name.
+```go
+map[string]any{
+	"database.url": "mysql://127.0.0.1:3306/beep"
+}
+```
 
-**The standalone functions** are the engine underneath, for when you need direct
-access to the field tree rather than the managed wrapper:
+or 
 
-- `structs.GetStructFields(v)` walks the struct (including nested and embedded
-  structs) and returns the full field tree.
-- `structs.SetStructFields(v, inputs, opts...)` populates the struct from a
-  `map[string]any`, applying defaults and coercing each value into the field's type.
-- `structs.ValidateStructFields(v, inputs, rules, opts...)` checks `inputs` against
-  each field's rules and returns a `map[field][]messages`.
+```go
+map[string]any{
+	"DATABASE_URL": "mysql://127.0.0.1:3306/beep"
+}
+```
+
 
 ## Install
 
