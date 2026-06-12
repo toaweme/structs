@@ -24,9 +24,11 @@ I'm a big fan of simplicity and the stdlib while powerful, doesn't make CLI flag
 - `structs.SetStructFields` takes a `map[string]any` and fills the struct fields.
 - `structs.ValidateStructFields` uses a rule map to validate your `map[string]any` against selected fields.
 
-## Quickstart
+## Overview
 
-### Nested structs
+### Struct embedding and nesting
+
+#### Nesting (a named struct field)
 
 Define your structs:
 
@@ -40,21 +42,68 @@ type Database struct {
 }
 ```
 
-Then use a map to set the fields:
+A nested field can be reached three ways, all equivalent:
 
 ```go
+// 1. dotted path: the field's tag glued to its parent's with "."
 map[string]any{
-	"database.url": "mysql://127.0.0.1:3306/beep"
+	"database.url": "mysql://127.0.0.1:3306/beep",
+}
+
+// 2. nested map: a sub-section keyed by the parent's tag
+map[string]any{
+	"database": map[string]any{
+		"url": "mysql://127.0.0.1:3306/beep",
+	},
+}
+
+// 3. env tag: the env tags glued with "_"
+map[string]any{
+	"DATABASE_URL": "mysql://127.0.0.1:3306/beep",
 }
 ```
 
-or 
+Nesting goes arbitrarily deep (`a.b.c`, or maps within maps). This is how a
+decoded JSON/YAML config drops straight in.
+
+#### Embedding (an anonymous struct field)
+
+An untagged embedded struct has its fields promoted to the parent level, exactly
+as Go (and `encoding/json`) promote them: no wrapper, no prefix. The embedded
+type may be exported or unexported.
+
+```go
+type Network struct {
+	Host string `json:"host" env:"HOST"`
+	Port int    `json:"port" env:"PORT"`
+}
+
+type Server struct {
+	Network        // embedded: Host and Port are promoted
+	Name string `json:"name"`
+}
+```
+
+Set the promoted fields by their own tag or name, with no parent prefix:
 
 ```go
 map[string]any{
-	"DATABASE_URL": "mysql://127.0.0.1:3306/beep"
+	"host": "127.0.0.1", // -> Server.Host
+	"port": 8080,        // -> Server.Port
+	"name": "edge",      // -> Server.Name
 }
 ```
+
+A *tagged* anonymous field is not promoted; it nests under its tag instead, just
+like `encoding/json`, so it behaves like the named nesting above.
+
+#### Limitations
+
+- Nested maps must be `map[string]any` at every level (the form JSON/YAML
+  decoders produce). A value whose concrete type is a typed map such as
+  `map[string]map[string]any` is only descended into where its element type is
+  `map[string]any`; a deeper typed-map intermediate is not traversed, so the
+  leaf stays unset. Use the dotted path or a `map[string]any` sub-section.
 
 
 ## Install
@@ -65,19 +114,27 @@ go get github.com/toaweme/structs
 
 ## Features
 
-- **Validate without mutating** - `Validate(inputs)` runs each field's `rules:`
-  and returns a `map[field][]messages`; an empty map means everything passed.
-- **Populate from a `map[string]any`** - `Set(inputs)` applies `default:` values
-  then matches each field by tag, coercing the value into the field's type.
-- **Tag priority** - matches by the first tag a field carries (default`["json", "yaml"]`), overridable with
-  `structs.WithTags(...)`.
-- **Defaults** - `default:"..."` seeds empty fields.
-- **Built-in rules** - `required` and `oneof:a,b,c`, extend or replace them with
-  `structs.WithRules(...)`.
-- **Slice splitting** - a scalar slice fed one string is split on the field's
-  `sep` tag (default `,`) and each element coerced; structured inputs pass through.
-- **Nested and embedded structs** - reach nested fields by dotted path, nested
-  map, or `env` tag; embedded structs promote their fields like Go does.
+- **Validate without mutating** - check inputs against each field's rules and get
+  back a map of field names with the validation messages
+- **Populate from a single map** - fill a struct from one map of values,
+  matching each field and converting the value into the field's type.
+- **Type coercion** - string, int, float, bool, slice, map, and interface fields
+  are all set from loosely typed inputs, so a port given as the string "9090"
+  lands in an int field.
+- **Tag priority** - decide which struct tag names a field by giving an ordered
+  list; the first tag a field carries wins. Defaults to json then yaml, and is overridable.
+- **Defaults** - a field left empty is seeded from its declared default value,
+  and a default never overrides a value that is already present.
+- **Built-in validation rules** - required and one-of out of the box, with the
+  ability to add your own named rules or replace the built-in set.
+- **Slice splitting** - a single string handed to a scalar slice field is split
+  into elements (comma by default, or a custom separator per field) and each
+  element is converted; already-structured inputs pass through untouched.
+
+- **Nested structs** - reach a field inside a nested struct by dotted path, by a
+  nested map, or by an env-style key, to any depth.
+- **Embedded structs** - fields of an anonymous embedded struct are promoted and
+  set directly, the way Go does it, whether the embedded type is exported or not.
 
 > This package does not read the env or any other value source. That's your responsibility.
 

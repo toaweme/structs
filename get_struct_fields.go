@@ -3,6 +3,7 @@ package structs
 import (
 	"reflect"
 	"strings"
+	"unsafe"
 )
 
 // GetStructFields reflects over structure (a pointer to a struct) and returns
@@ -39,7 +40,7 @@ func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Fie
 		// encoding/json: a tag on an anonymous field names it rather than
 		// promoting it.
 		if field.Anonymous && field.Type.Kind() == reflect.Struct && len(tags) == 0 {
-			promoted, err := GetStructFields(val.Field(i).Addr().Interface(), parent, encodingTags)
+			promoted, err := GetStructFields(addrInterface(fieldValue), parent, encodingTags)
 			if err != nil {
 				return nil, err
 			}
@@ -50,7 +51,7 @@ func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Fie
 		f := NewField(field.Name, field.Type.Kind(), fieldValue, tags, parent)
 
 		if field.Type.Kind() == reflect.Struct {
-			nestedFields, err := GetStructFields(val.Field(i).Addr().Interface(), &f, encodingTags)
+			nestedFields, err := GetStructFields(addrInterface(fieldValue), &f, encodingTags)
 			if err != nil {
 				return nil, err
 			}
@@ -65,6 +66,18 @@ func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Fie
 		}
 	}
 	return fields, nil
+}
+
+// addrInterface returns an interfaceable pointer to v, which must be
+// addressable. reflect refuses Addr().Interface() on an unexported field (e.g.
+// an embedded struct whose type is unexported), so the pointer is rebuilt via
+// unsafe. The field's own exported sub-fields then read and set normally,
+// matching Go's field promotion.
+func addrInterface(v reflect.Value) any {
+	if v.CanInterface() {
+		return v.Addr().Interface()
+	}
+	return reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Interface()
 }
 
 // parseTags extracts tags and their values from a given line of text

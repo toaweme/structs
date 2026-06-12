@@ -955,6 +955,33 @@ func Test_Setting_Embed_Struct(t *testing.T) {
 	}
 }
 
+// unexportedNetwork is embedded anonymously into embedServerUnexported below.
+// The type is unexported, so the embedded field is itself unexported, but its
+// exported fields are still promoted and set, matching Go's field promotion.
+type unexportedNetwork struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+type embedServerUnexported struct {
+	unexportedNetwork
+	Name string `json:"name"`
+}
+
+func Test_Setting_Embed_Unexported_Struct(t *testing.T) {
+	got := &embedServerUnexported{}
+	err := SetStructFields(got, Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}, map[string]any{
+		"host": "127.0.0.1",
+		"port": 8080,
+		"name": "edge",
+	})
+	requireNoError(t, err)
+	requireEqual(t, &embedServerUnexported{
+		unexportedNetwork: unexportedNetwork{Host: "127.0.0.1", Port: 8080},
+		Name:              "edge",
+	}, got)
+}
+
 func Test_ParseTags_StripsOmitempty(t *testing.T) {
 	tags := parseTags(`json:"filters,omitempty" yaml:"filters,omitempty,flow" rules:"required"`, DefaultEncodingTags)
 	requireEqual(t, "filters", tags["json"])
