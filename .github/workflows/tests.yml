@@ -1,4 +1,4 @@
-name: Quality and Compatibility
+name: Tests
 
 on:
   push:

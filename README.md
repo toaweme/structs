@@ -1,6 +1,17 @@
 # structs
 
-`structs` gives you the tools to work with Go's struct types.
+[![Quality](https://github.com/toaweme/structs/actions/workflows/tests.yml/badge.svg)](https://github.com/toaweme/structs/actions/workflows/tests.yml)
+[![Go Reference](https://img.shields.io/badge/Docs-pkg.go.dev-blue)](https://pkg.go.dev/github.com/toaweme/structs)
+[![GitHub Tag](https://img.shields.io/github/v/tag/toaweme/structs?label=Tag&color=green)](https://github.com/toaweme/structs/releases)
+[![License](https://img.shields.io/badge/License-MIT-blue)](/LICENSE)
+
+## Use Go's structs to innovate
+
+`github.com/toaweme/structs` gives you the tools to work with Go's structs, its fields, tags and values.
+
+This module was originally built as a fun way to solve the CLI app arg parsing problem.
+I'm a big fan of simplicity and the stdlib while powerful, doesn't make CLI flag/arg parsing simple, there's a lot of boilerplate.
+`structs` abstracts the complicated bits in magically setting struct field values (however nested) from a simple `map[string]any`.
 
 - `structs.GetStructFields` reads the entire nested struct field tree. 
 - `structs.SetStructFields` takes a `map[string]any` and populates the struct.
