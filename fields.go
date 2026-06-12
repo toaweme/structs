@@ -29,7 +29,9 @@ func parseRules(rules []string) []Rule {
 
 const defaultValueTag = "default"
 const envValueTag = "env"
-const validationTag = "rules"
+const rulesTag = "rules"
+const separatorTag = "sep"
+const defaultSeparator = ","
 
 // Field is the reflected description of one struct field, produced by
 // GetStructFields. Nested struct fields are described recursively through
@@ -68,9 +70,9 @@ func NewField(name string, dataType reflect.Kind, value reflect.Value, tags map[
 		f.Default = defaultVal
 		delete(tags, defaultValueTag)
 	}
-	if rules, ok := tags[validationTag]; ok {
+	if rules, ok := tags[rulesTag]; ok {
 		f.Rules = parseRules(strings.Split(rules, "|"))
-		delete(tags, validationTag)
+		delete(tags, rulesTag)
 	}
 	f.Value = value
 	f.Tags = tags

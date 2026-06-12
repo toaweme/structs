@@ -45,7 +45,7 @@ type Database struct {
 func Example() {
 	cfg := &ServerConfig{}
 
-	manager := structs.New(cfg, structs.WithTags("json", "yaml"))
+	manager := structs.New(cfg)
 
 	// in a real app this map is the merge of a decoded config file and os.Environ.
 	inputs := map[string]any{
@@ -88,7 +88,7 @@ func Example() {
 // did not set.
 func Example_environmentVariables() {
 	cfg := &ServerConfig{}
-	manager := structs.New(cfg, structs.WithTags("json", "yaml"))
+	manager := structs.New(cfg)
 
 	// these are the names you would read out of os.Environ.
 	env := map[string]any{
@@ -112,7 +112,7 @@ func Example_environmentVariables() {
 // path, the flat-key alternative to a nested sub-map.
 func Example_defaults() {
 	cfg := &ServerConfig{}
-	manager := structs.New(cfg, structs.WithTags("json", "yaml"))
+	manager := structs.New(cfg)
 
 	inputs := map[string]any{
 		"database.dsn": "postgres://localhost/app",

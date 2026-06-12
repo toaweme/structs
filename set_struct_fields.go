@@ -227,9 +227,6 @@ func findNestedValue(inputs map[string]any, path []string) (bool, any) {
 	return exists, value
 }
 
-const separatorTag = "sep"
-const defaultSeparator = ","
-
 func setField(field Field, input any) error {
 	if field.Kind == reflect.Slice {
 		input = splitSliceInput(field, input)

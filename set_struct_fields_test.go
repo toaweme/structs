@@ -768,7 +768,7 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := SetStructFields(tt.target, Settings{TagOrder: DefaultTags, EncodingTags: DefaultEncodingTags}, tt.inputs)
+			err := SetStructFields(tt.target, Settings{TagOrder: DefaultCLITags, EncodingTags: DefaultEncodingTags}, tt.inputs)
 			requireNoError(t, err)
 			tt.assert(t, tt.target)
 		})

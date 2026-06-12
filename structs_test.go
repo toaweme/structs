@@ -10,23 +10,21 @@ func Test_New_Options(t *testing.T) {
 	s := New(&struct{}{},
 		WithTags("arg", "json"),
 		WithEncodingTags("json"),
-		WithValidationMessageTag("validate"),
+		WithValidationTag("validate"),
 	)
 
 	requireEqual(t, []string{"arg", "json"}, s.tags)
 	requireEqual(t, []string{"json"}, s.encodingTags)
-	requireEqual(t, "validate", s.validationMessageTag)
+	requireEqual(t, "validate", s.validationTag)
 }
 
 func Test_New_Defaults(t *testing.T) {
 	s := New(&struct{}{})
 
-	// no WithTags -> tag priority left unset
-	if s.tags != nil {
-		t.Fatalf("expected nil tags, got %#v", s.tags)
-	}
+	// no WithTags -> tag priority defaults to DefaultTags
+	requireEqual(t, DefaultTags, s.tags)
 	requireEqual(t, DefaultEncodingTags, s.encodingTags)
-	requireEqual(t, "rules", s.validationMessageTag)
+	requireEqual(t, "rules", s.validationTag)
 }
 
 func Test_Struct_Validate(t *testing.T) {

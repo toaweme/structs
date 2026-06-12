@@ -6,14 +6,14 @@ import (
 
 // Struct holds the structure to be validated and the rules to validate it with
 type Struct struct {
-	structure            any
-	ruleFuncs            map[string]RuleFunc
-	validationMessageTag string
-	tags                 []string
-	encodingTags         []string
+	structure     any
+	ruleFuncs     map[string]RuleFunc
+	validationTag string
+	tags          []string
+	encodingTags  []string
 }
 
-// Option configures a Struct. See WithTags, WithEncodingTags, WithRules, WithValidationMessageTag.
+// Option configures a Struct. See WithTags, WithEncodingTags, WithRules, WithValidationTag.
 type Option func(*Struct)
 
 // WithTags sets the tag priority order used for input lookup and validation.
@@ -33,16 +33,19 @@ func WithRules(rules map[string]RuleFunc) Option {
 	return func(s *Struct) { s.ruleFuncs = rules }
 }
 
-// WithValidationMessageTag sets the struct tag whose value is used as the field
-// key in the map returned by Validate. When a field carries this tag, its value
-// replaces the tag-priority-resolved name in the validation messages, letting you
-// report errors under a stable, caller-facing name. Defaults to "rules".
-func WithValidationMessageTag(tag string) Option {
-	return func(s *Struct) { s.validationMessageTag = tag }
+// WithValidationTag sets the struct tag whose value is used as the field key in
+// the map returned by Validate. When a field carries this tag, its value replaces
+// the tag-priority-resolved name in the validation errors, letting you report
+// errors under a stable, caller-facing name. Defaults to "rules".
+func WithValidationTag(tag string) Option {
+	return func(s *Struct) { s.validationTag = tag }
 }
 
 // DefaultTags is the default tag priority order for input lookup and validation.
-var DefaultTags = []string{"arg", "short", "json", "yaml"}
+var DefaultTags = []string{"json", "yaml"}
+
+// DefaultCLITags is the default tag priority order for a cli app's command configuration structs
+var DefaultCLITags = []string{"arg", "short", "json", "yaml"}
 
 // DefaultEncodingTags are the struct tags whose values follow the stdlib
 // convention of a name followed by comma-separated options (e.g.
@@ -52,14 +55,16 @@ var DefaultTags = []string{"arg", "short", "json", "yaml"}
 var DefaultEncodingTags = []string{"json", "yaml", "toml", "xml"}
 
 // New binds a pointer to a struct into a reusable *Struct. structure must be a
-// pointer to a struct. Options override the defaults: no tag priority,
-// DefaultRules, DefaultEncodingTags, and the "rules" validation message tag.
+// pointer to a struct. Options override the defaults: DefaultTags for tag
+// priority, DefaultRules, DefaultEncodingTags, and the "rules" validation
+// message tag.
 func New(structure any, opts ...Option) *Struct {
 	s := &Struct{
-		structure:            structure,
-		validationMessageTag: validationTag,
-		ruleFuncs:            DefaultRules,
-		encodingTags:         DefaultEncodingTags,
+		structure:     structure,
+		validationTag: rulesTag,
+		tags:          DefaultTags,
+		ruleFuncs:     DefaultRules,
+		encodingTags:  DefaultEncodingTags,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -76,7 +81,7 @@ func (m *Struct) Validate(inputs map[string]any) (map[string][]string, error) {
 		return nil, fmt.Errorf("error getting struct fields for validation: %w", err)
 	}
 
-	errors, err := ValidateStructFields(m.ruleFuncs, structFields, inputs, m.validationMessageTag, m.tags...)
+	errors, err := ValidateStructFields(m.ruleFuncs, structFields, inputs, m.validationTag, m.tags...)
 	if err != nil {
 		return nil, fmt.Errorf("error validating struct with inputs: %w", err)
 	}
