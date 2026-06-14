@@ -5,12 +5,11 @@
 [![GitHub Tag](https://img.shields.io/github/v/tag/toaweme/structs?label=Tag&color=green)](https://github.com/toaweme/structs/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue)](/LICENSE)
 
-## Fill and read Go's structs
+## Fill and read Go structs
 
 `github.com/toaweme/structs` gives you runtime tools to work with Go's structs, its fields, tags and values.
 
-This module was originally built as a fun way to solve the CLI app arg parsing problem.
-I'm a big fan of simplicity and the stdlib while powerful, doesn't make CLI flag/arg parsing simple, there's a lot of boilerplate.
+This module was originally built as a fun way to solve the [CLI](https://github.com/toaweme/cli) app arg parsing problem.
 `structs` abstracts the complicated bits and can magically set struct field values (however nested) from a simple `map[string]any`.
 
 ## Install
