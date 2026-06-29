@@ -1,8 +1,15 @@
 # structs
 
-[![Quality](https://github.com/toaweme/structs/actions/workflows/tests.yml/badge.svg)](https://github.com/toaweme/structs/actions/workflows/tests.yml)
+[![Quality](https://github.com/awee-ai/structs/actions/workflows/quality.yml/badge.svg)](https://github.com/awee-ai/structs/actions/workflows/quality.yml)
+<a href="https://code.toawe.me/awee-ai/structs/health">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/awee-ai/structs/badge-dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/awee-ai/structs/badge.svg">
+        <img alt="structs health" src="https://code.toawe.me/awee-ai/structs/badge.svg">
+    </picture>
+</a>
 [![Go Reference](https://img.shields.io/badge/Docs-pkg.go.dev-blue)](https://pkg.go.dev/github.com/toaweme/structs)
-[![GitHub Tag](https://img.shields.io/github/v/tag/toaweme/structs?label=Tag&color=green)](https://github.com/toaweme/structs/releases)
+[![GitHub Tag](https://img.shields.io/github/v/tag/awee-ai/structs?label=Tag&color=green)](https://github.com/awee-ai/structs/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue)](/LICENSE)
 
 ## Fill and read Go structs
@@ -188,3 +195,17 @@ See [`example_test.go`](./example_test.go) for the full, runnable versions of ev
 ```sh
 go test -run Example -v
 ```
+
+## Hosted code and health reports
+
+Reports for this repo are hosted by our <a href="https://code.toawe.me">code viewer</a>, which also serves the badges and cards above.
+
+<p align="center">
+  <a href="https://code.toawe.me/awee-ai/structs/health"><picture><source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/awee-ai/structs/card.svg"><source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/awee-ai/structs/card-light.svg"><img alt="structs health" src="https://code.toawe.me/awee-ai/structs/card-light.svg" width="48%"></picture></a>
+  <a href="https://code.toawe.me/awee-ai/structs/code"><picture><source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/awee-ai/structs/code-card.svg"><source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/awee-ai/structs/code-card-light.svg"><img alt="structs code" src="https://code.toawe.me/awee-ai/structs/code-card-light.svg" width="48%"></picture></a>
+</p>
+
+---
+
+Made with ❤️ in Lithuania 🇱🇹.
+

@@ -76,7 +76,7 @@ func requireNotNil(t *testing.T, obj any, msg ...any) {
 	}
 	v := reflect.ValueOf(obj)
 	switch v.Kind() {
-	case reflect.Ptr, reflect.Map, reflect.Slice, reflect.Chan, reflect.Func, reflect.Interface:
+	case reflect.Pointer, reflect.Map, reflect.Slice, reflect.Chan, reflect.Func, reflect.Interface:
 		if v.IsNil() {
 			t.Fatalf("expected non-nil value%s", label(msg))
 		}

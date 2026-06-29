@@ -15,7 +15,7 @@ import (
 // It returns ErrInputPointer or ErrInputPointerStruct when structure is not a pointer to a struct.
 func GetStructFields(structure any, parent *Field, encodingTags []string) ([]Field, error) {
 	val := reflect.ValueOf(structure)
-	if val.Kind() != reflect.Ptr {
+	if val.Kind() != reflect.Pointer {
 		return nil, ErrInputPointer
 	}
 	if val.Elem().Kind() != reflect.Struct {
