@@ -5,10 +5,19 @@ All notable changes to this project are documented here, newest first.
 Entries are generated from [Conventional Commits](https://www.conventionalcommits.org)
 and grouped by change type. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-06-29
+
+### Fixes
+
+- Replace deprecated reflect.Ptr with reflect.Pointer by [@iberflow](https://github.com/iberflow) in [9633e63](https://github.com/toaweme/structs/commit/9633e63cba2e716c053936d433c8a1a6bfb062e7).
+
+### Documentation
+
+- Update README by [@iberflow](https://github.com/iberflow) in [0360e78](https://github.com/toaweme/structs/commit/0360e78bbaa9f7c877a851f8e57f91805da682d9).
 
 ### Chores & Other
 
+- Align README, CHANGELOG, and quality workflow with org standards by [@iberflow](https://github.com/iberflow) in [09708e0](https://github.com/toaweme/structs/commit/09708e03666d3d4dacc5a7ab70238088f0e72b73).
 - Update readme by [@iberflow](https://github.com/iberflow) in [ed76ac7](https://github.com/toaweme/structs/commit/ed76ac7c2ac5995681b2ad93dcf35dc98d6315bf).
 - Update readme by [@iberflow](https://github.com/iberflow) in [8341525](https://github.com/toaweme/structs/commit/8341525d2eaf66b8cfb3e481c907fd6ac361d5ee).
 
@@ -77,6 +86,6 @@ and grouped by change type. This project adheres to [Semantic Versioning](https:
 - Downgrade go.mod go directive to 1.22 by [@iberflow](https://github.com/iberflow) in [e5bdde5](https://github.com/toaweme/structs/commit/e5bdde5910a8b1e3c69b8579e3dd2636e04a05e5).
 - Cleanup sdk, examples, readme by [@iberflow](https://github.com/iberflow) in [8d45ed5](https://github.com/toaweme/structs/commit/8d45ed5132d226fcd8de35b7800902fa18d8f0be).
 
-[Unreleased]: https://github.com/toaweme/structs/compare/v0.2.0...HEAD
+[0.3.0]: https://github.com/toaweme/structs/compare/v0.2.0...0.3.0
 [0.2.0]: https://github.com/toaweme/structs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/toaweme/structs/releases/tag/v0.1.0
