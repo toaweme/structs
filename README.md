@@ -14,9 +14,10 @@
 
 ## Fill and read Go structs
 
-`github.com/toaweme/structs` gives you runtime tools to work with Go's structs, its fields, tags and values.
+`github.com/toaweme/structs` gives you runtime tools to work with Go's structs, its fields, tags and field values.
 
-This module was originally built as a fun way to solve the [CLI](https://github.com/toaweme/cli) app arg parsing problem.
+This module was originally built as a fun way to solve the [CLI](https://github.com/toaweme/cli) app arg parsing problem, but since then been used in multiple other projects.
+
 `structs` abstracts the complicated bits and can magically set struct field values (however nested) from a simple `map[string]any`.
 
 ## Install
