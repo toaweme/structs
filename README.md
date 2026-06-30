@@ -202,8 +202,8 @@ go test -run Example -v
 Reports for this repo are hosted by our <a href="https://code.toawe.me">code viewer</a>, which also serves the badges and cards above.
 
 <p align="center">
-  <a href="https://code.toawe.me/toaweme/structs/health"><picture><source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/toaweme/structs/card.svg"><source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/toaweme/structs/card-light.svg"><img alt="structs health" src="https://code.toawe.me/toaweme/structs/card-light.svg" width="48%"></picture></a>
-  <a href="https://code.toawe.me/toaweme/structs/code"><picture><source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/toaweme/structs/code-card.svg"><source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/toaweme/structs/code-card-light.svg"><img alt="structs code" src="https://code.toawe.me/toaweme/structs/code-card-light.svg" width="48%"></picture></a>
+  <a href="https://code.toawe.me/toaweme/structs/health"><picture><source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/toaweme/structs/card-dark.svg"><source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/toaweme/structs/card.svg"><img alt="structs health" src="https://code.toawe.me/toaweme/structs/card.svg" width="48%"></picture></a>
+  <a href="https://code.toawe.me/toaweme/structs/code"><picture><source media="(prefers-color-scheme: dark)" srcset="https://code.toawe.me/toaweme/structs/code-card-dark.svg"><source media="(prefers-color-scheme: light)" srcset="https://code.toawe.me/toaweme/structs/code-card.svg"><img alt="structs code" src="https://code.toawe.me/toaweme/structs/code-card.svg" width="48%"></picture></a>
 </p>
 
 ---
