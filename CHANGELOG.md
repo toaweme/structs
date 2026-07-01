@@ -5,6 +5,16 @@ All notable changes to this project are documented here, newest first.
 Entries are generated from [Conventional Commits](https://www.conventionalcommits.org)
 and grouped by change type. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-07-01
+
+### CI & Build
+
+- Bump care to v0.8.0 by [@iberflow](https://github.com/iberflow) in [670cdc1](https://github.com/toaweme/structs/commit/670cdc109295c0f851bbbb1fea8f5a2c7e4b1d62).
+- Bump care to v0.7.1 and pin to commit sha by [@iberflow](https://github.com/iberflow) in [639147b](https://github.com/toaweme/structs/commit/639147bcad9b6052e1da37a996efbe26d0a463c7).
+- Bump care to v0.6.0 and fix card-svg dark/light wiring by [@iberflow](https://github.com/iberflow) in [804ac1b](https://github.com/toaweme/structs/commit/804ac1b58c2db68d6445c8c65d690a7ffd3bb887).
+- Pin care version as an input by [@iberflow](https://github.com/iberflow) in [e17dc14](https://github.com/toaweme/structs/commit/e17dc14d1f5933c5177f620ea8c5df1f1848c7ab).
+- Bump care to v0.5.0 and pin to commit sha by [@iberflow](https://github.com/iberflow) in [f86d8d0](https://github.com/toaweme/structs/commit/f86d8d0c5780bd3a058df24e958892ec20581f7e).
+
 ## [0.3.0] - 2026-06-29
 
 ### Fixes
@@ -86,6 +96,7 @@ and grouped by change type. This project adheres to [Semantic Versioning](https:
 - Downgrade go.mod go directive to 1.22 by [@iberflow](https://github.com/iberflow) in [e5bdde5](https://github.com/toaweme/structs/commit/e5bdde5910a8b1e3c69b8579e3dd2636e04a05e5).
 - Cleanup sdk, examples, readme by [@iberflow](https://github.com/iberflow) in [8d45ed5](https://github.com/toaweme/structs/commit/8d45ed5132d226fcd8de35b7800902fa18d8f0be).
 
-[0.3.0]: https://github.com/toaweme/structs/compare/v0.2.0...0.3.0
+[0.3.1]: https://github.com/toaweme/structs/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/toaweme/structs/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/toaweme/structs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/toaweme/structs/releases/tag/v0.1.0
