@@ -5,6 +5,12 @@ All notable changes to this project are documented here, newest first.
 Entries are generated from [Conventional Commits](https://www.conventionalcommits.org)
 and grouped by change type. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-07-02
+
+### Chores & Other
+
+- Republish v0.5.0 to carry the Apache 2.0 relicense. The v0.5.0 module version was already cached by the Go proxy against the pre-relicense commit, so a moved tag could not deliver the new LICENSE; v0.5.1 is the first fetchable version that includes it. No code changes over v0.5.0.
+
 ## [0.5.0] - 2026-07-02
 
 ### Features
