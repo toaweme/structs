@@ -240,21 +240,23 @@ func setField(field Field, input any) error {
 	return nil
 }
 
-// MultiValue is a slice of raw string inputs that should each still be split on
-// the target field's sep tag. It is kept distinct from a plain []string so
-// splitSliceInput can tell "values that are individually still splittable" apart
-// from "an already-structured slice that must pass through untouched". Every
-// element is split on the sep tag and the results are concatenated, which is how
-// a caller that gathers a value under the same key more than once (["a,b","c"])
-// still folds the sep tag in to reach ["a","b","c"].
+// MultiValue holds the raw string inputs collected for one field when its key is
+// supplied more than once, such as a repeated flag. Unlike a plain []string,
+// which splitSliceInput treats as already-structured and passes through, each
+// MultiValue element is still split on the field's sep tag and the results are
+// concatenated, so ["a,b", "c"] with sep "," yields ["a", "b", "c"].
 type MultiValue []string
 
-// splitSliceInput turns a single string into a slice of trimmed elements,
-// splitting on the field's `sep` tag (default ","). It only applies when the
-// input is a string (or a MultiValue) and the slice element is a scalar, so
+// splitSliceInput splits a string or MultiValue into trimmed elements on the
+// field's sep tag (default ","). It applies only to a slice of scalars, so
 // already-structured inputs ([]string, []any from decoded config, struct-element
-// slices) pass through untouched. This is what lets a "a,b,c" input become
-// ["a","b","c"] instead of a single-element ["a,b,c"].
+// slices) pass through untouched. This lets an "a,b,c" input become
+// ["a", "b", "c"] rather than a single-element ["a,b,c"].
+//
+// A field that sets sep:"" opts out of splitting: each value is kept verbatim and
+// may contain any character. This differs from an absent sep tag, which falls
+// back to ",". Use it for a repeated free-form flag whose occurrences should each
+// stay one whole element.
 func splitSliceInput(field Field, input any) any {
 	if !field.Value.IsValid() || field.Value.Kind() != reflect.Slice {
 		return input
@@ -263,9 +265,12 @@ func splitSliceInput(field Field, input any) any {
 		return input
 	}
 
-	sep := field.Tags[separatorTag]
-	if sep == "" {
+	sep, ok := field.Tags[separatorTag]
+	if !ok {
 		sep = defaultSeparator
+	}
+	if sep == "" {
+		return literalSliceInput(input)
 	}
 
 	switch v := input.(type) {
@@ -280,6 +285,20 @@ func splitSliceInput(field Field, input any) any {
 	default:
 		// an already-structured slice ([]string, []any from decoded config, ...)
 		// is left for setSliceValue to handle.
+		return input
+	}
+}
+
+// literalSliceInput turns a string or a MultiValue into a slice without splitting,
+// so each element is kept verbatim. Used when a field opts out of separator
+// splitting with sep:"".
+func literalSliceInput(input any) any {
+	switch v := input.(type) {
+	case string:
+		return []string{v}
+	case MultiValue:
+		return []string(v)
+	default:
 		return input
 	}
 }

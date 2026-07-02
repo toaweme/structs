@@ -703,6 +703,9 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 	type withInts struct {
 		Ports []int `arg:"ports"`
 	}
+	type withNoSplit struct {
+		Repl []string `arg:"r" sep:""`
+	}
 
 	tests := []struct {
 		name   string
@@ -798,6 +801,24 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 			assert: func(t *testing.T, target any) {
 				t.Helper()
 				requireEqual(t, []int{8080, 9090, 3000}, target.(*withInts).Ports)
+			},
+		},
+		{
+			name:   "empty sep keeps a single value literal",
+			target: &withNoSplit{},
+			inputs: map[string]any{"r": "a=b;c,d"},
+			assert: func(t *testing.T, target any) {
+				t.Helper()
+				requireEqual(t, []string{"a=b;c,d"}, target.(*withNoSplit).Repl)
+			},
+		},
+		{
+			name:   "empty sep keeps each repeated value literal",
+			target: &withNoSplit{},
+			inputs: map[string]any{"r": MultiValue{"__A__=x;y,z", "__B__=p,q;r"}},
+			assert: func(t *testing.T, target any) {
+				t.Helper()
+				requireEqual(t, []string{"__A__=x;y,z", "__B__=p,q;r"}, target.(*withNoSplit).Repl)
 			},
 		},
 	}
