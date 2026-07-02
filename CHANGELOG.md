@@ -11,6 +11,14 @@ and grouped by change type. This project adheres to [Semantic Versioning](https:
 
 - Stop splitting slice values when a field sets sep:"" by [@iberflow](https://github.com/iberflow) in [1f2e069](https://github.com/toaweme/structs/commit/1f2e069709ccd28b64dfdffd62a6312db90faca0).
 
+### Documentation
+
+- Update CHANGELOG for v0.5.0 by [@iberflow](https://github.com/iberflow) in [80bebcc](https://github.com/toaweme/structs/commit/80bebcc666d09e0c9d7d4d371f71ff13c36d7ae1).
+
+### Chores & Other
+
+- Relicense from MIT to Apache 2.0 by [@iberflow](https://github.com/iberflow) in [3c4f72b](https://github.com/toaweme/structs/commit/3c4f72b0d51b4708825c0b0bc89d8bd9c35384c1).
+
 ## [0.4.0] - 2026-07-02
 
 ### Features
