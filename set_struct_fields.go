@@ -240,17 +240,22 @@ func setField(field Field, input any) error {
 	return nil
 }
 
+// MultiValue is a slice of raw string inputs that should each still be split on
+// the target field's sep tag. It is kept distinct from a plain []string so
+// splitSliceInput can tell "values that are individually still splittable" apart
+// from "an already-structured slice that must pass through untouched". Every
+// element is split on the sep tag and the results are concatenated, which is how
+// a caller that gathers a value under the same key more than once (["a,b","c"])
+// still folds the sep tag in to reach ["a","b","c"].
+type MultiValue []string
+
 // splitSliceInput turns a single string into a slice of trimmed elements,
 // splitting on the field's `sep` tag (default ","). It only applies when the
-// input is a string and the slice element is a scalar, so already-structured
-// inputs ([]any from decoded config, struct-element slices) pass through
-// untouched. This is what lets `--tags=a,b,c` and `TAGS=a,b,c` become
+// input is a string (or a MultiValue) and the slice element is a scalar, so
+// already-structured inputs ([]string, []any from decoded config, struct-element
+// slices) pass through untouched. This is what lets a "a,b,c" input become
 // ["a","b","c"] instead of a single-element ["a,b,c"].
 func splitSliceInput(field Field, input any) any {
-	s, ok := input.(string)
-	if !ok {
-		return input
-	}
 	if !field.Value.IsValid() || field.Value.Kind() != reflect.Slice {
 		return input
 	}
@@ -258,20 +263,37 @@ func splitSliceInput(field Field, input any) any {
 		return input
 	}
 
-	if s == "" {
-		return []string{}
-	}
-
 	sep := field.Tags[separatorTag]
 	if sep == "" {
 		sep = defaultSeparator
 	}
 
+	switch v := input.(type) {
+	case string:
+		return splitOnSep(v, sep)
+	case MultiValue:
+		parts := make([]string, 0, len(v))
+		for _, s := range v {
+			parts = append(parts, splitOnSep(s, sep)...)
+		}
+		return parts
+	default:
+		// an already-structured slice ([]string, []any from decoded config, ...)
+		// is left for setSliceValue to handle.
+		return input
+	}
+}
+
+// splitOnSep splits s on sep and trims each element. An empty string yields an
+// empty slice rather than a single empty element.
+func splitOnSep(s, sep string) []string {
+	if s == "" {
+		return []string{}
+	}
 	parts := strings.Split(s, sep)
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
-
 	return parts
 }
 

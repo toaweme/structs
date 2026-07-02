@@ -764,6 +764,42 @@ func Test_SetField_CommaSeparatedSlice(t *testing.T) {
 				requireEqual(t, []int{8080, 9090}, target.(*withInts).Ports)
 			},
 		},
+		{
+			name:   "MultiValue of repeated flags accumulates",
+			target: &withDefaultSep{},
+			inputs: map[string]any{"tags": MultiValue{"a", "b"}},
+			assert: func(t *testing.T, target any) {
+				t.Helper()
+				requireEqual(t, []string{"a", "b"}, target.(*withDefaultSep).Tags)
+			},
+		},
+		{
+			name:   "MultiValue composes each occurrence with the sep tag",
+			target: &withDefaultSep{},
+			inputs: map[string]any{"tags": MultiValue{"a,b", "c"}},
+			assert: func(t *testing.T, target any) {
+				t.Helper()
+				requireEqual(t, []string{"a", "b", "c"}, target.(*withDefaultSep).Tags)
+			},
+		},
+		{
+			name:   "MultiValue composes with a custom sep tag",
+			target: &withCustomSep{},
+			inputs: map[string]any{"tags": MultiValue{"a|b", "c"}},
+			assert: func(t *testing.T, target any) {
+				t.Helper()
+				requireEqual(t, []string{"a", "b", "c"}, target.(*withCustomSep).Tags)
+			},
+		},
+		{
+			name:   "MultiValue splits and converts to an int slice",
+			target: &withInts{},
+			inputs: map[string]any{"ports": MultiValue{"8080,9090", "3000"}},
+			assert: func(t *testing.T, target any) {
+				t.Helper()
+				requireEqual(t, []int{8080, 9090, 3000}, target.(*withInts).Ports)
+			},
+		},
 	}
 
 	for _, tt := range tests {
