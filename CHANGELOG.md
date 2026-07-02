@@ -5,12 +5,11 @@ All notable changes to this project are documented here, newest first.
 Entries are generated from [Conventional Commits](https://www.conventionalcommits.org)
 and grouped by change type. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-07-02
 
-### CI & Build
+### Features
 
-- Bump care to v0.8.1 by [@iberflow](https://github.com/iberflow) in [3fe3e4e](https://github.com/toaweme/structs/commit/3fe3e4edef4fc1257e0e96ac3f29e1a30ecd9b4a).
-- Use stable go for release gate to avoid old-go.mod tool-install failures by [@iberflow](https://github.com/iberflow) in [ab6a3ad](https://github.com/toaweme/structs/commit/ab6a3ad0c436e5b424efa699c4dce93f5b883980).
+- Split MultiValue inputs per-element so repeated values compose with the sep tag by [@iberflow](https://github.com/iberflow) in [ac150fd](https://github.com/toaweme/structs/commit/ac150fd3008659dc90fcbfa1ed3d4e9ea99c1d0d).
 
 ## [0.3.1] - 2026-07-01
 
@@ -103,7 +102,7 @@ and grouped by change type. This project adheres to [Semantic Versioning](https:
 - Downgrade go.mod go directive to 1.22 by [@iberflow](https://github.com/iberflow) in [e5bdde5](https://github.com/toaweme/structs/commit/e5bdde5910a8b1e3c69b8579e3dd2636e04a05e5).
 - Cleanup sdk, examples, readme by [@iberflow](https://github.com/iberflow) in [8d45ed5](https://github.com/toaweme/structs/commit/8d45ed5132d226fcd8de35b7800902fa18d8f0be).
 
-[Unreleased]: https://github.com/toaweme/structs/compare/v0.3.1...HEAD
+[0.4.0]: https://github.com/toaweme/structs/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/toaweme/structs/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/toaweme/structs/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/toaweme/structs/compare/v0.1.0...v0.2.0
