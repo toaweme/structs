@@ -136,7 +136,11 @@ like `encoding/json`, so it behaves like the named nesting above.
   ability to add your own named rules or replace the built-in set.
 - **Slice splitting** - a single string handed to a scalar slice field is split
   into elements (comma by default, or a custom separator per field) and each
-  element is converted; already-structured inputs pass through untouched.
+  element is converted; already-structured inputs pass through untouched. Hand it
+  a `structs.MultiValue` instead - a slice of strings that each still want
+  splitting - and every element is split and the pieces joined into one slice, so
+  values collected under the same key more than once still fold the separator in.
+  Set `sep:""` to turn splitting off and keep each value exactly as given.
 
 - **Nested structs** - reach a field inside a nested struct by dotted path, by a
   nested map, or by an env-style key, to any depth.
