@@ -5,6 +5,12 @@ All notable changes to this project are documented here, newest first.
 Entries are generated from [Conventional Commits](https://www.conventionalcommits.org)
 and grouped by change type. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-02
+
+### Features
+
+- Stop splitting slice values when a field sets sep:"" by [@iberflow](https://github.com/iberflow) in [1f2e069](https://github.com/toaweme/structs/commit/1f2e069709ccd28b64dfdffd62a6312db90faca0).
+
 ## [0.4.0] - 2026-07-02
 
 ### Features
@@ -102,6 +108,7 @@ and grouped by change type. This project adheres to [Semantic Versioning](https:
 - Downgrade go.mod go directive to 1.22 by [@iberflow](https://github.com/iberflow) in [e5bdde5](https://github.com/toaweme/structs/commit/e5bdde5910a8b1e3c69b8579e3dd2636e04a05e5).
 - Cleanup sdk, examples, readme by [@iberflow](https://github.com/iberflow) in [8d45ed5](https://github.com/toaweme/structs/commit/8d45ed5132d226fcd8de35b7800902fa18d8f0be).
 
+[0.5.0]: https://github.com/toaweme/structs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/toaweme/structs/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/toaweme/structs/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/toaweme/structs/compare/v0.2.0...v0.3.0
