@@ -49,5 +49,10 @@ jobs:
 
       - uses: toaweme/care@8c5839056d7aeea9ffb5fb513bed9f9b9797e0d8 # v0.9.3
         with:
-          strict: true                                  # fail CI on a failing check
+          strict: true # fail CI on a failing check
           publish-url: https://code.toawe.me/ingest?kind=care
+
+      # publish this repo's code view to code.toawe.me
+      - uses: toaweme/codereport@10bd1b60f6525ae86af9ba719ceedfc06c160271 # v0.3.0
+        with:
+          publish-url: https://code.toawe.me/ingest?kind=code
