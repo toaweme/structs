@@ -20,6 +20,8 @@ This module was originally built as a fun way to solve the [CLI](https://github.
 
 `structs` abstracts the complicated bits and can magically set struct field values (however nested) from a simple `map[string]any`.
 
+**[Documentation](https://toawe.me/docs/structs)** | [toawe.me](https://toawe.me)
+
 ## Install
 
 ```sh
