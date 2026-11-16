@@ -4,13 +4,34 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/toaweme/structs/utils"
 )
 
 // ErrInputPointer is returned when the structure passed in is not a pointer.
 var ErrInputPointer = errors.New("structure should be a pointer")
+
+// errNotAMap is returned when a map field is given an input that is not a map.
+var errNotAMap = errors.New("input is not a map")
+
+// errNotABool is returned when a bool field is given an input
+// that is neither a bool nor a string parseBool recognizes.
+var errNotABool = errors.New("input is not a bool")
+
+// errUnsupportedKind is returned when a field, or a map value, has a kind
+// the setter cannot fill, such as a struct or a pointer inside a map.
+var errUnsupportedKind = errors.New("unsupported kind")
+
+// errInvalidDuration is returned when a string for a time.Duration field
+// is not a duration such as "1m30s".
+var errInvalidDuration = errors.New("invalid duration")
+
+// errOverflow is returned when a number does not fit the field's integer type,
+// including a negative number for an unsigned field.
+var errOverflow = errors.New("value overflows the field type")
 
 // ErrInputPointerStruct is returned when the structure passed in is a pointer
 // but does not point to a struct.
@@ -331,11 +352,23 @@ func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue re
 		}
 		fieldValue.SetFloat(float)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		integer, err := utils.ToInt(value)
+		integer, err := toInt64(value, fieldValue.Type())
 		if err != nil {
 			return err
 		}
-		fieldValue.Set(reflect.ValueOf(integer))
+		if fieldValue.OverflowInt(integer) {
+			return fmt.Errorf("failed to set %d: %w", integer, errOverflow)
+		}
+		fieldValue.SetInt(integer)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		integer, err := toUint64(value)
+		if err != nil {
+			return err
+		}
+		if fieldValue.OverflowUint(integer) {
+			return fmt.Errorf("failed to set %d: %w", integer, errOverflow)
+		}
+		fieldValue.SetUint(integer)
 	case reflect.Slice:
 		err := setSliceValue(value, fieldValue)
 		if err != nil {
@@ -346,17 +379,128 @@ func setValue(fieldName string, value any, fieldType reflect.Kind, fieldValue re
 		case bool:
 			fieldValue.SetBool(v)
 		case string:
-			fieldValue.SetBool(utils.ParseBool(v))
+			b, ok := parseBool(v)
+			if !ok {
+				return fmt.Errorf("failed to set bool from %q: %w", v, errNotABool)
+			}
+			fieldValue.SetBool(b)
+		default:
+			return fmt.Errorf("failed to set bool from %T: %w", value, errNotABool)
 		}
 	case reflect.Interface:
 		if value != nil {
 			fieldValue.Set(reflect.ValueOf(value))
 		}
 	case reflect.Map:
-		fieldValue.Set(reflect.ValueOf(value))
+		err := setMapValue(value, fieldValue)
+		if err != nil {
+			return err
+		}
 	default:
-		return fmt.Errorf("unsupported field[%s] type: %s", fieldName, fieldType)
+		return fmt.Errorf("failed to set %s value for field %q: %w", fieldType, fieldName, errUnsupportedKind)
 	}
+
+	return nil
+}
+
+// toInt64 converts value for an integer field of type t. A string targeting a
+// time.Duration is parsed as a duration such as "1m30s". Any other input, including
+// an integer for a time.Duration, is converted as a whole number.
+func toInt64(value any, t reflect.Type) (int64, error) {
+	if s, ok := value.(string); ok && t == reflect.TypeFor[time.Duration]() {
+		d, err := time.ParseDuration(s)
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse duration %q: %w: %w", s, err, errInvalidDuration)
+		}
+		return int64(d), nil
+	}
+	integer, err := utils.ToInt(value)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(integer), nil
+}
+
+// toUint64 converts value for an unsigned integer field. Unsigned inputs pass
+// through, while signed integers, whole floats and numeric strings are converted.
+// A negative number is an overflow rather than wrapping around.
+func toUint64(value any) (uint64, error) {
+	if s, ok := value.(string); ok {
+		integer, err := strconv.ParseUint(s, 10, 64)
+		if err == nil {
+			return integer, nil
+		}
+		if signed, serr := strconv.ParseInt(s, 10, 64); serr == nil && signed < 0 {
+			return 0, fmt.Errorf("failed to set negative %d: %w", signed, errOverflow)
+		}
+		return 0, fmt.Errorf("failed to parse uint value %q: %w", s, err)
+	}
+	if v := reflect.ValueOf(value); v.CanUint() {
+		return v.Uint(), nil
+	}
+	integer, err := utils.ToInt(value)
+	if err != nil {
+		return 0, err
+	}
+	if integer < 0 {
+		return 0, fmt.Errorf("failed to set negative %d: %w", integer, errOverflow)
+	}
+
+	return uint64(integer), nil
+}
+
+// parseBool reads a bool from a string. It accepts what strconv.ParseBool does
+// plus yes/no, y/n and on/off in any case, the same set the cli accepts for a bool flag.
+// Anything else is reported as not ok rather than read as false.
+func parseBool(value string) (bool, bool) {
+	switch strings.ToLower(value) {
+	case "yes", "y", "on":
+		return true, true
+	case "no", "n", "off":
+		return false, true
+	}
+	b, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, false
+	}
+
+	return b, true
+}
+
+// setMapValue sets a map field from any map input, converting each key and
+// value to the field's key and element types when the map is not already
+// assignable. A nil input leaves the field as is.
+// Converting element by element is what lets a decoded config map[string]any
+// fill a map[string]string field.
+func setMapValue(value any, fieldValue reflect.Value) error {
+	if value == nil {
+		return nil
+	}
+	input := reflect.ValueOf(value)
+	if input.Kind() != reflect.Map {
+		return fmt.Errorf("failed to set map from %T: %w", value, errNotAMap)
+	}
+
+	fieldType := fieldValue.Type()
+	if input.Type().AssignableTo(fieldType) {
+		fieldValue.Set(input)
+		return nil
+	}
+	out := reflect.MakeMapWithSize(fieldType, input.Len())
+	iter := input.MapRange()
+	for iter.Next() {
+		key := reflect.New(fieldType.Key()).Elem()
+		if err := setValue("", iter.Key().Interface(), key.Kind(), key); err != nil {
+			return fmt.Errorf("failed to convert map key %v: %w", iter.Key().Interface(), err)
+		}
+		elem := reflect.New(fieldType.Elem()).Elem()
+		if err := setValue("", iter.Value().Interface(), elem.Kind(), elem); err != nil {
+			return fmt.Errorf("failed to convert map value for key %v: %w", iter.Key().Interface(), err)
+		}
+		out.SetMapIndex(key, elem)
+	}
+	fieldValue.Set(out)
 
 	return nil
 }
