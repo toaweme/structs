@@ -5,6 +5,35 @@ All notable changes to this project are documented here, newest first.
 Entries are generated from [Conventional Commits](https://www.conventionalcommits.org)
 and grouped by change type. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-11-17
+
+### Fixes
+
+- Parse durations and unsigned integers and convert map inputs instead of panicking by [@iberflow](https://github.com/iberflow) in [#6](https://github.com/toaweme/structs/pull/6).
+- Pin care action by commit sha, not tag object by [@iberflow](https://github.com/iberflow) in [d89d1f1](https://github.com/toaweme/structs/commit/d89d1f1bf550586afb422896ff90ed5e0e0ebfca).
+
+### Documentation
+
+- Link to docs site from README by [@iberflow](https://github.com/iberflow) in [130f5c6](https://github.com/toaweme/structs/commit/130f5c697ea123b303e842f089cb56164cd77a20).
+- Add Contributing section to README by [@iberflow](https://github.com/iberflow) in [956c365](https://github.com/toaweme/structs/commit/956c365306d852c8d7f113e4993667a9d7eec37c).
+- Document MultiValue and sep:"" in README by [@iberflow](https://github.com/iberflow) in [c0159b2](https://github.com/toaweme/structs/commit/c0159b2d17c699003075ba054d27df5fb6a94ac5).
+
+### CI & Build
+
+- Bump codereport to v0.4.0 by [@iberflow](https://github.com/iberflow) in [036cdcf](https://github.com/toaweme/structs/commit/036cdcf983eef3fd60a45a3deb596bdfb08ed4ac).
+- Bump care to v0.9.6 by [@iberflow](https://github.com/iberflow) in [fc8cbf4](https://github.com/toaweme/structs/commit/fc8cbf448c2867fa9e1d897e7d6cb8c34eb781ea).
+- Bump care to v0.9.5 and pin actions to latest by [@iberflow](https://github.com/iberflow) in [0eb6006](https://github.com/toaweme/structs/commit/0eb6006baf26f3f0d772cd5bdd5bf2951066bcb1).
+- Pin go toolchain to 1.26 instead of stable by [@iberflow](https://github.com/iberflow) in [b237ab7](https://github.com/toaweme/structs/commit/b237ab7787959e365a3af0a90b2f39c2551a61d0).
+- Publish code.json via codereport action by [@iberflow](https://github.com/iberflow) in [#3](https://github.com/toaweme/structs/pull/3).
+- Bump care action to v0.9.3 by [@iberflow](https://github.com/iberflow) in [115c3b0](https://github.com/toaweme/structs/commit/115c3b01e4525030fc7fe92e1bda3739c6692ccc).
+- Move action version to inline comment so dependabot maintains it by [@iberflow](https://github.com/iberflow) in [7a44355](https://github.com/toaweme/structs/commit/7a443555cccbb1520d562ada01a07bfb8fb80e7a).
+- Drop gomod dependabot block from dependency-free module by [@iberflow](https://github.com/iberflow) in [da6ae34](https://github.com/toaweme/structs/commit/da6ae3465d0a14bb1b31878f7d5a9098aad0155f).
+- Add governance workflows and contributor docs by [@iberflow](https://github.com/iberflow) in [e7adf22](https://github.com/toaweme/structs/commit/e7adf224d4d55969b4e9894aea87483faeab3d89).
+
+### Chores & Other
+
+- **Deps:** Bump toaweme/care from 0.9.3 to 0.9.4 in the actions group by [@dependabot[bot]](https://github.com/dependabot[bot]) in [#4](https://github.com/toaweme/structs/pull/4).
+
 ## [0.5.1] - 2026-07-02
 
 ### Chores & Other
@@ -122,6 +151,8 @@ and grouped by change type. This project adheres to [Semantic Versioning](https:
 - Downgrade go.mod go directive to 1.22 by [@iberflow](https://github.com/iberflow) in [e5bdde5](https://github.com/toaweme/structs/commit/e5bdde5910a8b1e3c69b8579e3dd2636e04a05e5).
 - Cleanup sdk, examples, readme by [@iberflow](https://github.com/iberflow) in [8d45ed5](https://github.com/toaweme/structs/commit/8d45ed5132d226fcd8de35b7800902fa18d8f0be).
 
+[0.5.2]: https://github.com/toaweme/structs/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/toaweme/structs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/toaweme/structs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/toaweme/structs/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/toaweme/structs/compare/v0.3.0...v0.3.1
