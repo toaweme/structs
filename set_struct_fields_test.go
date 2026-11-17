@@ -1,7 +1,9 @@
 package structs
 
 import (
+	"strconv"
 	"testing"
+	"time"
 )
 
 func Test_SetStructFields(t *testing.T) {
@@ -340,6 +342,494 @@ func Test_SetStructFields(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "duration string is parsed",
+			structure: &struct {
+				Wait time.Duration `name:"wait"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"wait": "1m30s",
+			},
+			expected: &struct {
+				Wait time.Duration `name:"wait"`
+			}{
+				Wait: 90 * time.Second,
+			},
+		},
+		{
+			name: "duration integer is nanoseconds",
+			structure: &struct {
+				Wait time.Duration `name:"wait"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"wait": 5,
+			},
+			expected: &struct {
+				Wait time.Duration `name:"wait"`
+			}{
+				Wait: 5,
+			},
+		},
+		{
+			name: "duration string without a unit",
+			structure: &struct {
+				Wait time.Duration `name:"wait"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"wait": "5",
+			},
+			wantErr: errInvalidDuration,
+		},
+		{
+			name: "sized int",
+			structure: &struct {
+				Small int8 `name:"small"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"small": "-7",
+			},
+			expected: &struct {
+				Small int8 `name:"small"`
+			}{
+				Small: -7,
+			},
+		},
+		{
+			name: "sized int overflow",
+			structure: &struct {
+				Small int8 `name:"small"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"small": 300,
+			},
+			wantErr: errOverflow,
+		},
+		{
+			name: "map of the field type is set as is",
+			structure: &struct {
+				Vars map[string]string `name:"vars"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"vars": map[string]string{
+					"a": "1",
+				},
+			},
+			expected: &struct {
+				Vars map[string]string `name:"vars"`
+			}{
+				Vars: map[string]string{
+					"a": "1",
+				},
+			},
+		},
+		{
+			name: "decoded map is converted per entry",
+			structure: &struct {
+				Vars map[string]string `name:"vars"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"vars": map[string]any{
+					"a": "1",
+					"b": 2,
+				},
+			},
+			expected: &struct {
+				Vars map[string]string `name:"vars"`
+			}{
+				Vars: map[string]string{
+					"a": "1",
+					"b": "2",
+				},
+			},
+		},
+		{
+			name: "unconvertible map value",
+			structure: &struct {
+				Ports map[string]int `name:"ports"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"ports": map[string]any{
+					"http": "x",
+				},
+			},
+			wantErr: strconv.ErrSyntax,
+		},
+		{
+			name: "non map input for a map field",
+			structure: &struct {
+				Vars map[string]string `name:"vars"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"vars": "a=1",
+			},
+			wantErr: errNotAMap,
+		},
+		{
+			name: "uint string is parsed",
+			structure: &struct {
+				Port uint16 `name:"port"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"port": "8080",
+			},
+			expected: &struct {
+				Port uint16 `name:"port"`
+			}{
+				Port: 8080,
+			},
+		},
+		{
+			name: "sized uint overflow",
+			structure: &struct {
+				Small uint8 `name:"small"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"small": 300,
+			},
+			wantErr: errOverflow,
+		},
+		{
+			name: "negative uint is an overflow",
+			structure: &struct {
+				Count uint `name:"count"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"count": "-1",
+			},
+			wantErr: errOverflow,
+		},
+		{
+			name: "decoded map is converted to uint values",
+			structure: &struct {
+				Limits map[string]uint32 `name:"limits"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"limits": map[string]any{
+					"cpu": "2",
+					"mem": 512,
+				},
+			},
+			expected: &struct {
+				Limits map[string]uint32 `name:"limits"`
+			}{
+				Limits: map[string]uint32{
+					"cpu": 2,
+					"mem": 512,
+				},
+			},
+		},
+		{
+			name: "bool from an int is rejected",
+			structure: &struct {
+				Debug bool `name:"debug"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"debug": 1,
+			},
+			wantErr: errNotABool,
+		},
+		{
+			name: "bool from accepted strings",
+			structure: &struct {
+				A bool `name:"a"`
+				B bool `name:"b"`
+				C bool `name:"c"`
+				D bool `name:"d"`
+				E bool `name:"e"`
+				F bool `name:"f"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"a": "TRUE",
+				"b": "yes",
+				"c": "On",
+				"d": "1",
+				"e": "t",
+				"f": "Y",
+			},
+			expected: &struct {
+				A bool `name:"a"`
+				B bool `name:"b"`
+				C bool `name:"c"`
+				D bool `name:"d"`
+				E bool `name:"e"`
+				F bool `name:"f"`
+			}{
+				A: true,
+				B: true,
+				C: true,
+				D: true,
+				E: true,
+				F: true,
+			},
+		},
+		{
+			name: "bool false strings clear a default",
+			structure: &struct {
+				A bool `name:"a" default:"true"`
+				B bool `name:"b"`
+				C bool `name:"c"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"a": "off",
+				"b": "No",
+				"c": "0",
+			},
+			expected: &struct {
+				A bool `name:"a" default:"true"`
+				B bool `name:"b"`
+				C bool `name:"c"`
+			}{},
+		},
+		{
+			name: "bool from an unrecognized string is rejected",
+			structure: &struct {
+				Debug bool `name:"debug"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"debug": "maybe",
+			},
+			wantErr: errNotABool,
+		},
+		{
+			name: "float map values from decoded and string values",
+			structure: &struct {
+				Values map[string]float64 `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]any{
+					"a": 1.5,
+					"b": "2.25",
+					"c": 3,
+				},
+			},
+			expected: &struct {
+				Values map[string]float64 `name:"values"`
+			}{
+				Values: map[string]float64{
+					"a": 1.5,
+					"b": 2.25,
+					"c": 3,
+				},
+			},
+		},
+		{
+			name: "duration map values from strings",
+			structure: &struct {
+				Values map[string]time.Duration `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]string{
+					"wait": "5s",
+				},
+			},
+			expected: &struct {
+				Values map[string]time.Duration `name:"values"`
+			}{
+				Values: map[string]time.Duration{
+					"wait": 5 * time.Second,
+				},
+			},
+		},
+		{
+			name: "any map values are stored as is",
+			structure: &struct {
+				Values map[string]any `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]any{
+					"n": 1,
+					"s": "x",
+					"l": []any{"a"},
+				},
+			},
+			expected: &struct {
+				Values map[string]any `name:"values"`
+			}{
+				Values: map[string]any{
+					"n": 1,
+					"s": "x",
+					"l": []any{"a"},
+				},
+			},
+		},
+		{
+			name: "slice map values from a string are not split",
+			structure: &struct {
+				Values map[string][]string `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]string{
+					"a": "x,y",
+				},
+			},
+			expected: &struct {
+				Values map[string][]string `name:"values"`
+			}{
+				Values: map[string][]string{
+					"a": {"x,y"},
+				},
+			},
+		},
+		{
+			name: "nested map values from a decoded config map",
+			structure: &struct {
+				Values map[string]map[string]string `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]any{
+					"db": map[string]any{
+						"host": "localhost",
+						"port": 5432,
+					},
+				},
+			},
+			expected: &struct {
+				Values map[string]map[string]string `name:"values"`
+			}{
+				Values: map[string]map[string]string{
+					"db": {
+						"host": "localhost",
+						"port": "5432",
+					},
+				},
+			},
+		},
+		{
+			name: "struct map values are rejected",
+			structure: &struct {
+				Values map[string]struct{ A int } `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]any{
+					"a": map[string]any{
+						"A": 1,
+					},
+				},
+			},
+			wantErr: errUnsupportedKind,
+		},
+		{
+			name: "pointer map values are rejected",
+			structure: &struct {
+				Values map[string]*string `name:"values"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"values": map[string]string{
+					"a": "x",
+				},
+			},
+			wantErr: errUnsupportedKind,
+		},
+		{
+			name: "bool map values from strings",
+			structure: &struct {
+				Features map[string]bool `name:"features"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"features": map[string]string{
+					"x": "yes",
+					"y": "false",
+				},
+			},
+			expected: &struct {
+				Features map[string]bool `name:"features"`
+			}{
+				Features: map[string]bool{
+					"x": true,
+					"y": false,
+				},
+			},
+		},
+		{
+			name: "bool map value from an unrecognized string is rejected",
+			structure: &struct {
+				Features map[string]bool `name:"features"`
+			}{},
+			settings: Settings{
+				TagOrder: []string{"name"},
+			},
+			inputs: map[string]any{
+				"features": map[string]string{
+					"x": "maybe",
+				},
+			},
+			wantErr: errNotABool,
 		},
 	}
 
